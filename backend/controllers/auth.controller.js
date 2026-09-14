@@ -18,13 +18,16 @@ const setCookie = (res, accessToken, refreshToken) => {
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        // Stripe redirects the browser back from stripe.com after checkout.
+        // Lax keeps the cookie protected from cross-site requests while
+        // allowing that top-level return navigation to retain the session.
+        sameSite: "lax",
         maxAge: 15 * 60 * 1000 // 15 minutes
     })
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
         maxAge: 7 * 24 * 60 * 1000 // 7 days
     })
 };
@@ -132,7 +135,7 @@ export const refreshToken = async (req, res) => {
 
         const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 
-        res.cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", maxAge: 15 * 60 * 1000 });
+        res.cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 15 * 60 * 1000 });
 
         res.json({ accessToken });
     } catch (error) {
