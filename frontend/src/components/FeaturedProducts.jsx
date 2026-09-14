@@ -21,6 +21,12 @@ const FeaturedProducts = ({ featuredProducts }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // A viewport change can alter how many cards fit on screen. Keep the
+    // carousel index within the new valid range so it never shows a blank row.
+    useEffect(() => {
+        setCurrentIndex((index) => Math.min(index, Math.max(products.length - itemsPerPage, 0)));
+    }, [itemsPerPage, products.length]);
+
     const nextSlide = () => {
         setCurrentIndex((prevIndex) => Math.min(prevIndex + itemsPerPage, Math.max(products.length - itemsPerPage, 0)));
     };
@@ -57,7 +63,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
                                             <div className='p-4'>
                                                 <h3 className='text-lg font-semibold text-white'>{product.name}</h3>
                                                 <p className='text-emerald-600 font-medium mb-4'>
-                                                    ${product.price.toFixed(2)}
+                                                    ${Number(product.price || 0).toFixed(2)}
                                                 </p>
                                                 <button
                                                     onClick={() => addToCart(product)}
