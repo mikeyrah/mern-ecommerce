@@ -1,108 +1,75 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
+import { ArrowRight, Leaf, Loader, Lock, LogIn, Mail, Sparkles } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 
- const LoginPage = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const { login, loading } = useUserStore();
+const LoginPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, loading } = useUserStore();
 
-    const handleSubmit =(e) => {
-        e.preventDefault();
-        login( email, password);
-    }
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    login(email, password);
+  };
 
-    return (
-    <div className='flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
-            <motion.div
-                className='sm:mx-auto sm:w-full sm:max-w-md'
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-            >
-                <h2 className='mt-6 text-center text-3xl font-extrabold text-emerald-400'>Welcome back</h2>
-            </motion.div>
+  return (
+    <main className="brand-shell flex min-h-[calc(100vh-5rem)] items-center px-4 py-10 sm:px-8">
+      <motion.div
+        className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-[#e1dacb] bg-white shadow-[0_24px_80px_rgba(68,62,45,0.14)] md:grid-cols-[0.9fr_1.1fr]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55 }}
+      >
+        <section className="relative overflow-hidden bg-[#6f856c] p-9 text-white sm:p-12">
+          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full border border-white/20" />
+          <div className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full border border-white/20" />
+          <div className="relative flex h-full flex-col justify-between gap-14">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold tracking-wide text-[#f7e7b4]"><Sparkles size={16} /> Stewart-Tate &amp; Co.</div>
+              <h1 className="mt-8 max-w-sm font-serif text-5xl leading-[0.98]">Welcome back to the collective.</h1>
+              <p className="mt-6 max-w-sm text-base leading-7 text-white/80">Continue discovering thoughtful pieces from Botani Eve, The Krafted Charm, and The Velvet Bakery.</p>
+            </div>
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
+              <Leaf size={20} className="text-[#f7e7b4]" />
+              <p className="mt-3 font-serif text-xl">Crafted with care, chosen by you.</p>
+            </div>
+          </div>
+        </section>
 
-            <motion.div
-                className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-            >
-                <div className='bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10'>
-                    <form onSubmit={handleSubmit} className='space-y-6'>
-                        <div>
-                            <label htmlFor='email' className='block text-sm font-medium text-gray-300'>
-                                Email Address
-                            </label>
-                            <div className='mt-1 relative rounded-md shadow-sm'>
-                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                                    <Mail className='h-5 w-5 text-gray-400' aria-hidden='true' />
-                                </div>
-                                <input
-                                    id='email'
-                                    type='email'
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
-                                    placeholder='john.doe@example.com'
-                                />
-                            </div>
-                        </div>
+        <section className="p-8 sm:p-12">
+          <p className="section-kicker text-[#B58A34]">Member sign in</p>
+          <h2 className="mt-3 font-serif text-4xl text-[#27352b]">Welcome back.</h2>
+          <p className="mt-3 text-sm leading-6 text-[#687064]">Sign in to view your cart and keep shopping your favorite collections.</p>
 
-                        <div>
-                            <label htmlFor='password' className='block text-sm font-medium text-gray-300'>
-                                Password
-                            </label>
-                            <div className='mt-1 relative rounded-md shadow-sm'>
-                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                                    <Lock className='h-5 w-5 text-gray-400' aria-hidden='true' />
-                                </div>
-                                <input
-                                    id='password'
-                                    type='password'
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
-                                    placeholder='••••••••'
-                                />
-                            </div>
-                        </div>
+          <form onSubmit={handleSubmit} className="mt-9 space-y-5">
+            <label className="block text-sm font-semibold text-[#43503f]" htmlFor="email">
+              Email address
+              <span className="relative mt-2 block">
+                <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C9279]" size={18} />
+                <input id="email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] py-3 pl-11 pr-4 text-[#27352b] outline-none transition placeholder:text-[#9a9c91] focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" />
+              </span>
+            </label>
 
-                            <button
-                                type='submit'
-                                className='group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm 
-                                text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:focus:outline-none focus:ring-2 
-                                focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50'
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <>
-                                    <Loader className='mr-2 h-5 w-5 animate-spin' aria-hidden='true' />
-                                    Loading... 
-                                    </>
-                                ) : (
-                                    <>
-                                    <LogIn className='mr-2 h-5 w-5' aria-hidden='true' />
-                                    Login
-                                    </>
-                                )}
-                            </button>
-                    </form>
+            <label className="block text-sm font-semibold text-[#43503f]" htmlFor="password">
+              Password
+              <span className="relative mt-2 block">
+                <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C9279]" size={18} />
+                <input id="password" type="password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" className="w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] py-3 pl-11 pr-4 text-[#27352b] outline-none transition placeholder:text-[#9a9c91] focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" />
+              </span>
+            </label>
 
-                    <p className='mt-8 text-center text-sm text-gray-400'>
-                        Not a member?{" "}
-                        <Link to='/signup' className='font-medium text-emerald-400 hover:text-emerald-300'>
-                        Sign up now <ArrowRight className='inline h-4 w-4' />
-                        </Link>
-                    </p>
-                </div>
-            </motion.div>
-        </div>
-    );
+            <button type="submit" disabled={loading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f856c] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#586d55] focus:outline-none focus:ring-4 focus:ring-[#dce7d9] disabled:opacity-50">
+              {loading ? <><Loader className="animate-spin" size={18} /> Signing in…</> : <><LogIn size={18} /> Sign in <ArrowRight size={17} /></>}
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-[#687064]">New to the collective? <Link to="/signup" className="font-semibold text-[#9b7528] hover:text-[#76571d]">Create an account <ArrowRight className="inline" size={15} /></Link></p>
+        </section>
+      </motion.div>
+    </main>
+  );
 };
+
 export default LoginPage;
