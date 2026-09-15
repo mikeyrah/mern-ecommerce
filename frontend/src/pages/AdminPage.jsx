@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { BarChart, PlusCircle, ShoppingBasket } from 'lucide-react';
+import { BarChart, PlusCircle, ShoppingBasket, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import AnalyticsTab from '../components/AnalyticsTab';
@@ -21,26 +21,25 @@ const AdminPage = () => {
     fetchAllProducts();
   }, [fetchAllProducts]);
   return (
-    <div className='min-h-screen relative overflow-hidden'>
-      <div className='relative z-10 container mx-auto px-4 py-16'></div>
-      <motion.h1
-        className='text-4xl font-bold mb-8 text-emerald-400 text-center'
+    <main className='brand-shell min-h-screen px-4 py-12 sm:px-8'>
+      <motion.section className='mx-auto max-w-6xl rounded-[2rem] border border-[#e1dacb] bg-white p-8 shadow-[0_16px_50px_rgba(68,62,45,0.08)] sm:p-10'
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         >
-          Admin Dashboard
-        </motion.h1>
+          <p className='section-kicker text-[#B58A34]'>Stewart-Tate &amp; Co. operations</p>
+          <div className='mt-3 flex flex-wrap items-center justify-between gap-4'><h1 className='font-serif text-4xl text-[#27352b]'>Brand Studio</h1><span className='inline-flex items-center gap-2 rounded-full bg-[#e6eee3] px-4 py-2 text-sm font-semibold text-[#586d55]'><Sparkles size={16} /> Curate with intention</span></div>
+        </motion.section>
 
-        <div className='flex justify-center mb-8'>
+        <div className='mx-auto mt-8 flex max-w-6xl flex-wrap gap-2 rounded-2xl border border-[#e1dacb] bg-white p-2 shadow-sm'>
           {tabs.map((tab) => (
             <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center px-4 py-2 mx-2 rounded-md transition-colors duration-200 ${
+            className={`flex items-center px-4 py-2 rounded-xl transition-colors duration-200 ${
               activeTab === tab.id
-              ? "bg-emerald-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#6f856c] text-white shadow-sm"
+              : "text-[#596259] hover:bg-[#f3eee2]"
             }`}
             >
             <tab.icon className='mr-2 h-5 w-5' />
@@ -48,11 +47,9 @@ const AdminPage = () => {
             </button>
           ))}
         </div>
-        {activeTab === "create" && <CreateProductForm />}
-        {activeTab === "products" && <ProductsList />}
-        {activeTab === "analytics" && <AnalyticsTab />}
+        <div className='mt-8'>{activeTab === "create" && <CreateProductForm />}{activeTab === "products" && <ProductsList />}{activeTab === "analytics" && <AnalyticsTab />}</div>
 
-    </div>
+    </main>
   )
 }
 

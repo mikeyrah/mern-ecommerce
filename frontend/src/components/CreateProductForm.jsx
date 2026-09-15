@@ -48,12 +48,12 @@ const CreateProductForm = () => {
 
   return (
     <motion.div
-    className='bg-gray-800 shadow-lg rounded-lg p-8 mb-8 max-w-xl mx-auto'
+    className='admin-form bg-white shadow-[0_12px_30px_rgba(68,62,45,0.08)] border border-[#e1dacb] rounded-2xl p-8 mb-8 max-w-xl mx-auto'
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8 }}
     >
-        <h2 className='text-2xl font-semibold mb-6 text-emerald-300'>Create New Products</h2>
+        <h2 className='font-serif text-3xl font-semibold mb-2 text-[#27352b]'>Create a new product</h2><p className='mb-6 text-sm text-[#687064]'>Choose the brand collection where this item belongs.</p>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
             <div>

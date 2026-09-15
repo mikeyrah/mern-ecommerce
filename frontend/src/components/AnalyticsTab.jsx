@@ -46,11 +46,11 @@ const AnalyticsTab = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className='mx-auto max-w-6xl rounded-2xl bg-white p-8 text-center text-[#596259]'>Loading your brand insights…</div>;
   }
 
   if (error) {
-    return <div className='rounded-lg bg-red-950/50 p-4 text-center text-red-300'>{error}</div>;
+    return <div className='mx-auto max-w-6xl rounded-2xl bg-red-50 p-4 text-center text-red-700'>{error}</div>;
   }
 
   return (
@@ -82,7 +82,7 @@ const AnalyticsTab = () => {
         />
   </div>
   <motion.div
-    className='bg-gray-800/60 rounded-lg p-6 shadow-lg'
+    className='bg-white rounded-2xl p-6 shadow-[0_12px_30px_rgba(68,62,45,0.08)] border border-[#e1dacb]'
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay: 0.25 }}
@@ -119,22 +119,22 @@ const AnalyticsTab = () => {
 };
 export default AnalyticsTab;
 
-const AnalyticsCard = ({ title, value, icon: Icon, color }) => {
+const AnalyticsCard = ({ title, value, icon: Icon }) => {
   return (
     <motion.div
-      className={`bg-gray-800 rounded-lg p-6 shadow-lg overflow-hidden relative ${color}`}
+      className='bg-white rounded-2xl p-6 shadow-[0_12px_30px_rgba(68,62,45,0.08)] overflow-hidden relative border border-[#e1dacb]'
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <div className='flex items-center justify-between'>
         <div className='z-10'>
-          <p className='text-emerald-300 text-sm mb-1 font-semibold'>{title}</p>
-          <h3 className='text-white text-3xl font-bold'>{value}</h3>
+          <p className='text-[#7C9279] text-sm mb-1 font-semibold'>{title}</p>
+          <h3 className='text-[#27352b] text-3xl font-bold'>{value}</h3>
         </div>
         </div>
-       <div className='absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-900 opacity-30' />
-       <div className='absolute -bottom-4 -right-4 text-emerald-800 opacity-50'>
+       <div className='absolute inset-0 bg-gradient-to-br from-[#e6eee3] to-[#f7ecd4] opacity-70' />
+       <div className='absolute -bottom-4 -right-4 text-[#B58A34] opacity-25'>
         <Icon className='h-32 w-32' />
        </div>
     </motion.div>

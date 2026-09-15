@@ -16,4 +16,14 @@
   .brand-card { @apply rounded-[1.5rem] border border-[#e2dac7] p-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(73,65,43,0.13)]; background: linear-gradient(145deg, var(--brand-soft), #fff 68%); }
   .brand-cta { @apply items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95; }
   .brand-monogram { background-image: radial-gradient(circle at 20% 15%, rgba(255,255,255,.22) 0 2px, transparent 3px), radial-gradient(circle at 80% 78%, rgba(255,255,255,.18) 0 2px, transparent 3px); background-size: 38px 38px, 51px 51px; }
+  .admin-form label { color: #43503f; }
+  .admin-form input, .admin-form select, .admin-form textarea { background: #fdfcf9; border-color: #dcd5c5; color: #27352b; }
+  .admin-form input:focus, .admin-form select:focus, .admin-form textarea:focus { border-color: #7c9279; --tw-ring-color: #e6eee3; }
+  .admin-form label[for="image"] { background: #f3eee2; border-color: #ded7c8; color: #43503f; }
+  .admin-form button[type="submit"] { background: #6f856c; }
+  .admin-table thead { background: #f3eee2; }
+  .admin-table tbody { background: white; }
+  .admin-table th { color: #687064; }
+  .admin-table td { color: #43503f; }
+  .admin-table tr:hover { background: #fcfaf5; }
 }
