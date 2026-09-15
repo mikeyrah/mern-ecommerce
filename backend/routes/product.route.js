@@ -1,6 +1,6 @@
 import express from "express";
 import { getAllProducts, getFeaturedProducts, createProduct,
-     deleteProduct, getRecommendedProducts, getProductsByCategory, toggleFeaturedProduct } from "../controllers/product.controller.js";
+     deleteProduct, getRecommendedProducts, getProductsByCategory, getProductsByBrand, toggleFeaturedProduct } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 router.get("/",protectRoute, adminRoute, getAllProducts)
 router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductsByCategory);
+router.get("/brand/:brand", getProductsByBrand);
 router.get("/recommendations", getRecommendedProducts);
 router.post("/", protectRoute, adminRoute, createProduct);
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);

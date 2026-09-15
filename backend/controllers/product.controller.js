@@ -37,7 +37,7 @@ export const getFeaturedProducts = async (req, res) => {
 
     export const createProduct = async (req, res) => {
         try {
-            const { name, description, price, image, category} = req.body;
+            const { name, description, price, image, category, brand} = req.body;
 
             let cloudinaryResponse = null;
 
@@ -49,7 +49,8 @@ export const getFeaturedProducts = async (req, res) => {
                 description,
                 price,
                 image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
-                category
+                category,
+                brand
             })
             res.status(201).json({ product });
         } catch (error) {
@@ -115,6 +116,22 @@ export const getFeaturedProducts = async (req, res) => {
             res.json({ products });
         } catch (error) {
             console.log("Error in getProductsByCategory controller", error.message);
+            res.status(500).json({ message: "Server error", error: error.message });
+        }
+    };
+
+    export const getProductsByBrand = async (req, res) => {
+        const { brand } = req.params;
+        try {
+            // Products created before brand support belong to the original
+            // apparel collection, The Krafted Charm.
+            const filter = brand === "the-krafted-charm"
+                ? { $or: [{ brand }, { brand: { $exists: false } }] }
+                : { brand };
+            const products = await Product.find(filter);
+            res.json({ products });
+        } catch (error) {
+            console.log("Error in getProductsByBrand controller", error.message);
             res.status(500).json({ message: "Server error", error: error.message });
         }
     };

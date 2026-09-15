@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#fcfaf5] text-[#27352b] antialiased;
+  }
+}
+
+@layer components {
+  .brand-shell { @apply bg-[#fcfaf5] text-[#27352b]; }
+  .section-kicker { @apply text-xs font-bold uppercase tracking-[0.24em]; }
+  .brand-tab { @apply rounded-full border border-[#ded7c8] bg-white px-4 py-2 text-sm font-medium text-[#596259] transition hover:border-[#b58a34] hover:text-[#846321]; }
+  .brand-tab-active { @apply border-transparent text-white shadow-sm; background-color: var(--brand-accent); }
+  .brand-card { @apply rounded-[1.5rem] border border-[#e2dac7] p-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(73,65,43,0.13)]; background: linear-gradient(145deg, var(--brand-soft), #fff 68%); }
+  .brand-cta { @apply items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95; }
+  .brand-monogram { background-image: radial-gradient(circle at 20% 15%, rgba(255,255,255,.22) 0 2px, transparent 3px), radial-gradient(circle at 80% 78%, rgba(255,255,255,.18) 0 2px, transparent 3px); background-size: 38px 38px, 51px 51px; }
+}

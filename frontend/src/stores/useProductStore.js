@@ -42,6 +42,16 @@ export const useProductStore = create((set) => ({
             toast.error(error.response.data.error || "Failed to fetch products");
         }
     },
+    fetchProductsByBrand: async (brand) => {
+        set({ loading: true });
+        try {
+            const response = await axios.get(`/products/brand/${brand}`);
+            set({ products: response.data.products, loading: false });
+        } catch (error) {
+            set({ error: "Failed to fetch brand products", loading: false });
+            toast.error(error.response?.data?.message || "Failed to fetch brand products");
+        }
+    },
     deleteProduct: async (productId) => {
         set({ loading: true });
         try {

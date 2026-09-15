@@ -41,7 +41,8 @@ const FeaturedProducts = ({ featuredProducts }) => {
     return (
         <div className='py-12'>
             <div className='container mx-auto px-4'>
-                <h2 className='text-center text-5xl sm:text-6xl font-bold text-emerald-400 mb-4'>Featured Products</h2>
+                <p className='section-kicker text-center text-[#B58A34]'>Curated for you</p>
+                <h2 className='mt-2 text-center font-serif text-5xl sm:text-6xl text-[#27352b] mb-4'>Featured Finds</h2>
                 <div className='relative'>
                     <div className='overflow-hidden'>
                         <div
@@ -53,7 +54,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
                                     key={product._id}
                                     className='w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 p-2'
                                 >
-                                    <div className='bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30'>
+                                    <div className='bg-white rounded-2xl shadow-[0_12px_28px_rgba(73,65,43,0.08)] overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-[#e1dacb]'>
                                         <div className='overflow-hidden'>
                                             <img
                                                 src={product.image}
@@ -61,13 +62,13 @@ const FeaturedProducts = ({ featuredProducts }) => {
                                                 className='w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-110'
                                             />
                                             <div className='p-4'>
-                                                <h3 className='text-lg font-semibold text-white'>{product.name}</h3>
-                                                <p className='text-emerald-600 font-medium mb-4'>
+                                                <h3 className='text-lg font-semibold text-[#27352b]'>{product.name}</h3>
+                                                <p className='text-[#B58A34] font-medium mb-4'>
                                                     ${Number(product.price || 0).toFixed(2)}
                                                 </p>
                                                 <button
                                                     onClick={() => addToCart(product)}
-                                                    className='w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 flex items-center justify-center'
+                                                    className='w-full bg-[#6f856c] hover:bg-[#586d55] text-white font-semibold py-2 px-4 rounded transition-colors duration-300 flex items-center justify-center'
                                                 >
                                                     <ShoppingCart className='w-5 h-5 mr-2' />
                                                     Add to Cart
@@ -84,14 +85,14 @@ const FeaturedProducts = ({ featuredProducts }) => {
                         <button
                             onClick={prevSlide}
                             disabled={isStartDisabled}
-                            className='rounded border border-emerald-400 px-4 py-2 text-sm font-medium text-emerald-600 disabled:cursor-not-allowed disabled:opacity-50'
+                            className='rounded border border-[#7C9279] px-4 py-2 text-sm font-medium text-[#586d55] disabled:cursor-not-allowed disabled:opacity-50'
                         >
                             Previous
                         </button>
                         <button
                             onClick={nextSlide}
                             disabled={isEndDisabled || products.length <= itemsPerPage}
-                            className='rounded bg-emerald-500 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-emerald-300'
+                            className='rounded bg-[#B58A34] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-[#dbc58e]'
                         >
                             Next
                         </button>

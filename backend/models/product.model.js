@@ -22,6 +22,12 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    brand: {
+        type: String,
+        enum: ["botani-eve", "the-krafted-charm", "the-velvet-bakery"],
+        default: "the-krafted-charm",
+        index: true,
+    },
     isFeatured: {
         type: Boolean,
         default: false,

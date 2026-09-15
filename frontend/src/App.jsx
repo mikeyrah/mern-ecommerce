@@ -10,6 +10,7 @@ import CategoryPage from './pages/CategoryPage';
 import CartPage from './pages/CartPage';
 import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchaseCancelPage from './pages/PurchaseCancelPage';
+import BrandPage from './pages/BrandPage';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -36,12 +37,12 @@ function App() {
   if (checkingAuth) return <LoadingSpinner />;
 
   return (
-    <div className='min-h-screen bg-gray-900 text-white relative overflow-hidden'>
+    <div className='min-h-screen bg-[#fcfaf5] text-[#27352b] relative overflow-hidden'>
       {/* Background gradient */}
       <div className='absolute inset-0 overflow-hidden'>
         <div className='absolute inset-0'>
           <div className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 
-          bg-[radial-gradient(ellipse_at_top,_rgba(16,185,129,0.3)_0%,_rgba(10,80,60,0.2)_45%,_rgba(0,0,0,0.1)_100%)]" />
+          bg-[radial-gradient(ellipse_at_top,_rgba(230,238,227,0.9)_0%,_rgba(252,250,245,0.8)_45%,_rgba(250,246,236,0.9)_100%)]" />
         </div>
       </div>
 
@@ -53,6 +54,7 @@ function App() {
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to='/' />} />
         <Route path='/secret-dashboard' element={user?.role === "admin" ? <AdminPage /> : <Navigate to='/login' />} />
         <Route path='/category/:category' element={ <CategoryPage /> } />
+        <Route path='/brands/:brand' element={<BrandPage />} />
         <Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-cancel' element={<PurchaseCancelPage />} />

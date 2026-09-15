@@ -4,7 +4,12 @@ import { motion } from 'framer-motion';
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from '../stores/useProductStore';
 
-const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags"];
+const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags", "skincare", "body-care", "self-care", "cakes", "cookies", "treats"];
+const brands = [
+    { value: "botani-eve", label: "Botani Eve" },
+    { value: "the-krafted-charm", label: "The Krafted Charm" },
+    { value: "the-velvet-bakery", label: "The Velvet Bakery" },
+];
 
 const CreateProductForm = () => {
     const [newProduct, setNewProduct] = useState({
@@ -12,6 +17,7 @@ const CreateProductForm = () => {
         description: "",
         price: "",
         category: "",
+        brand: "the-krafted-charm",
         image: "",
     });
 
@@ -21,7 +27,7 @@ const CreateProductForm = () => {
         e.preventDefault();
        try {
         await createProduct(newProduct);
-        setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
+        setNewProduct({ name: "", description: "", price: "", category: "", brand: "the-krafted-charm", image: "" });
        } catch {
         console.log("error creating a product");
        }
@@ -50,6 +56,18 @@ const CreateProductForm = () => {
         <h2 className='text-2xl font-semibold mb-6 text-emerald-300'>Create New Products</h2>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
+            <div>
+                <label htmlFor='brand' className='block text-sm font-medium text-gray-300'>Brand</label>
+                <select
+                id='brand'
+                value={newProduct.brand}
+                onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                className='mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500'
+                >
+                    {brands.map((brand) => <option key={brand.value} value={brand.value}>{brand.label}</option>)}
+                </select>
+            </div>
+
             <div>
                 <label htmlFor='name' className='block text-sm font-medium text-gray-300'>
                     Product Name
