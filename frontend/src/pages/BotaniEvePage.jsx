@@ -53,9 +53,15 @@ const BotaniEvePage = () => {
   );
 
   const visibleProducts = useMemo(() => {
-    if (activeCollection !== "all") return products.filter((product) => product.category === activeCollection);
+    if (activeCollection !== "all") {
+      return products.filter((product) =>
+        product.category === activeCollection ||
+        (activeCollection === "whipped-butter" && product.category === "mens-whipped-butter")
+      );
+    }
     if (activeGroup === "all") return products;
     const groupCategories = new Set(botaniCollections.filter((item) => item.group === activeGroup).map((item) => item.slug));
+    if (activeGroup === "men") groupCategories.add("mens-whipped-butter");
     return products.filter((product) => groupCategories.has(product.category));
   }, [activeCollection, activeGroup, products]);
 
