@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { brands, getBrand } from "../data/brands";
 import { useProductStore } from "../stores/useProductStore";
 import ProductCard from "../components/ProductCard";
+import BotaniEvePage from "./BotaniEvePage";
 
 const BrandPage = () => {
   const { brand: brandSlug } = useParams();
@@ -11,8 +12,10 @@ const BrandPage = () => {
   const { fetchProductsByBrand, products, loading } = useProductStore();
 
   useEffect(() => {
-    if (brand) fetchProductsByBrand(brand.slug);
-  }, [brand, fetchProductsByBrand]);
+    if (brand && brandSlug !== "botani-eve") fetchProductsByBrand(brand.slug);
+  }, [brand, brandSlug, fetchProductsByBrand]);
+
+  if (brandSlug === "botani-eve") return <BotaniEvePage />;
 
   if (!brand) return <div className="brand-shell px-6 py-32 text-center">Brand not found.</div>;
 
