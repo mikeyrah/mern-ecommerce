@@ -20,7 +20,7 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "30mb" }));
 app.use(cookieParser());
 
 // The frontend sends authentication cookies with requests. When it runs on a

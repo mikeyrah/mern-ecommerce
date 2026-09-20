@@ -13,6 +13,7 @@ import PurchaseCancelPage from './pages/PurchaseCancelPage';
 import BrandPage from './pages/BrandPage';
 import BotaniBathBodyPage from './pages/BotaniBathBodyPage';
 import BotaniCollectionPage from './pages/BotaniCollectionPage';
+import ProductPage from './pages/ProductPage';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -59,6 +60,7 @@ function App() {
         <Route path='/brands/botani-eve/bath-body' element={<BotaniBathBodyPage />} />
         <Route path='/brands/botani-eve/:collection' element={<BotaniCollectionPage />} />
         <Route path='/brands/:brand' element={<BrandPage />} />
+        <Route path='/products/:id' element={<ProductPage />} />
         <Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-cancel' element={<PurchaseCancelPage />} />

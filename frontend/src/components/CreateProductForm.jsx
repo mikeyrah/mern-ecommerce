@@ -23,7 +23,10 @@ const CreateProductForm = () => {
         price: "",
         category: "",
         brand: "the-krafted-charm",
-        image: "",
+        images: [],
+        details: "",
+        ingredients: "",
+        isNew: false,
     });
 
     const {createProduct, loading} = useProductStore();
@@ -32,24 +35,20 @@ const CreateProductForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
        try {
-        await createProduct(newProduct);
-        setNewProduct({ name: "", description: "", price: "", category: "", brand: "the-krafted-charm", image: "" });
+        const created = await createProduct(newProduct);
+        if (created) setNewProduct({ name: "", description: "", price: "", category: "", brand: "the-krafted-charm", images: [], details: "", ingredients: "", isNew: false });
        } catch {
         console.log("error creating a product");
        }
     };
 
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if(file) {
+        const files = Array.from(e.target.files || []);
+        Promise.all(files.map((file) => new Promise((resolve) => {
             const reader = new FileReader();
-
-            reader.onloadend = () => {
-                setNewProduct({ ...newProduct, image: reader.result });
-            }
-
+            reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(file);
-        }
+        }))).then((images) => setNewProduct((current) => ({ ...current, images })));
     }
 
   return (
@@ -72,6 +71,16 @@ const CreateProductForm = () => {
                 >
                     {brands.map((brand) => <option key={brand.value} value={brand.value}>{brand.label}</option>)}
                 </select>
+            </div>
+
+            <div>
+                <label htmlFor='details' className='block text-sm font-medium text-gray-300'>Full Details</label>
+                <textarea id='details' value={newProduct.details} onChange={(e) => setNewProduct({ ...newProduct, details: e.target.value })} rows='4' className='mt-1 block w-full rounded-md border px-3 py-2' placeholder='Share usage, texture, size, care instructions, and other product details.' />
+            </div>
+
+            <div>
+                <label htmlFor='ingredients' className='block text-sm font-medium text-gray-300'>Ingredients</label>
+                <textarea id='ingredients' value={newProduct.ingredients} onChange={(e) => setNewProduct({ ...newProduct, ingredients: e.target.value })} rows='3' className='mt-1 block w-full rounded-md border px-3 py-2' placeholder='Separate ingredients with commas' />
             </div>
 
             <div>
@@ -147,7 +156,7 @@ const CreateProductForm = () => {
             </div>
 
             <div className='mt-1 flex items-center'>
-                <input type='file' id='image' className='sr-only' accept='image/*'
+                <input type='file' id='image' className='sr-only' accept='image/*' multiple
                     onChange={handleImageChange}
                 />
                 <label
@@ -157,10 +166,15 @@ const CreateProductForm = () => {
                 focus:ring-emerald-500'
                 >
                     <Upload className='h-5 w-5 inline-block mr-2' />
-                    Upload Image
+                    Upload Product Images
                 </label>
-                {newProduct.image && <span className='ml-3 text-sm text-gray-400'>Image uploaded</span>}
+                {newProduct.images.length > 0 && <span className='ml-3 text-sm text-gray-400'>{newProduct.images.length} image{newProduct.images.length === 1 ? "" : "s"} selected</span>}
             </div>
+
+            <label className='flex items-center gap-3 rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] px-4 py-3 text-sm font-medium text-[#43503f]'>
+                <input type='checkbox' checked={newProduct.isNew} onChange={(e) => setNewProduct({ ...newProduct, isNew: e.target.checked })} className='h-4 w-4 accent-[#6f856c]' />
+                Show this product as New
+            </label>
 
             <button
             type='submit'

@@ -23,7 +23,10 @@ const EditProductModal = ({ product, onClose }) => {
     price: product.price,
     brand: product.brand || "the-krafted-charm",
     category: product.category,
-    image: product.image,
+    images: product.images?.length ? product.images : [product.image].filter(Boolean),
+    details: product.details || "",
+    ingredients: product.ingredients?.join(", ") || "",
+    isNew: Boolean(product.isNew),
   });
 
   const categoryOptions = useMemo(() => categoriesByBrand[form.brand] || [], [form.brand]);
@@ -37,11 +40,13 @@ const EditProductModal = ({ product, onClose }) => {
   const setField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
   const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setField("image", reader.result);
-    reader.readAsDataURL(file);
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    Promise.all(files.map((file) => new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    }))).then((images) => setField("images", images));
   };
 
   const handleSubmit = async (event) => {
@@ -79,12 +84,23 @@ const EditProductModal = ({ product, onClose }) => {
           <label className="text-sm font-semibold">Price
             <input required min="0" step="0.01" type="number" value={form.price} onChange={(event) => setField("price", event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" />
           </label>
-          <label className="text-sm font-semibold">Replace image
-            <span className="mt-2 flex cursor-pointer items-center gap-2 rounded-xl border border-[#dcd5c5] bg-white px-4 py-3 font-normal text-[#596259]"><ImagePlus size={18} /> Choose a new image</span>
-            <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+          <label className="text-sm font-semibold">Replace image gallery
+            <span className="mt-2 flex cursor-pointer items-center gap-2 rounded-xl border border-[#dcd5c5] bg-white px-4 py-3 font-normal text-[#596259]"><ImagePlus size={18} /> Choose multiple images</span>
+            <input type="file" accept="image/*" multiple onChange={handleImageChange} className="sr-only" />
+            <span className="mt-1 block text-xs font-normal text-[#7a827c]">{form.images.length} image{form.images.length === 1 ? "" : "s"} selected</span>
           </label>
           <label className="sm:col-span-2 text-sm font-semibold">Description
             <textarea required rows="4" value={form.description} onChange={(event) => setField("description", event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" />
+          </label>
+          <label className="sm:col-span-2 text-sm font-semibold">Full details
+            <textarea rows="4" value={form.details} onChange={(event) => setField("details", event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" />
+          </label>
+          <label className="sm:col-span-2 text-sm font-semibold">Ingredients
+            <textarea rows="3" value={form.ingredients} onChange={(event) => setField("ingredients", event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" placeholder="Separate ingredients with commas" />
+          </label>
+          <label className="sm:col-span-2 flex items-center gap-3 rounded-xl border border-[#dcd5c5] bg-white px-4 py-3 text-sm font-semibold">
+            <input type="checkbox" checked={form.isNew} onChange={(event) => setField("isNew", event.target.checked)} className="h-4 w-4 accent-[#6f856c]" />
+            Display New product badge
           </label>
 
           <div className="sm:col-span-2 flex flex-col-reverse gap-3 border-t border-[#e2dccf] pt-5 sm:flex-row sm:justify-end">
