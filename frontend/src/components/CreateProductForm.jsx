@@ -3,8 +3,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from '../stores/useProductStore';
+import { botaniCollections } from '../data/brands';
 
-const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags", "skincare", "body-care", "self-care", "cakes", "cookies", "treats"];
+const categoriesByBrand = {
+    "botani-eve": botaniCollections.map(({ slug, label }) => ({ value: slug, label })),
+    "the-krafted-charm": ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags"].map((value) => ({ value, label: value.replaceAll("-", " ") })),
+    "the-velvet-bakery": ["cakes", "cookies", "treats"].map((value) => ({ value, label: value })),
+};
 const brands = [
     { value: "botani-eve", label: "Botani Eve" },
     { value: "the-krafted-charm", label: "The Krafted Charm" },
@@ -22,6 +27,7 @@ const CreateProductForm = () => {
     });
 
     const {createProduct, loading} = useProductStore();
+    const availableCategories = categoriesByBrand[newProduct.brand] || [];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -61,7 +67,7 @@ const CreateProductForm = () => {
                 <select
                 id='brand'
                 value={newProduct.brand}
-                onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value, category: "" })}
                 className='mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500'
                 >
                     {brands.map((brand) => <option key={brand.value} value={brand.value}>{brand.label}</option>)}
@@ -132,9 +138,9 @@ const CreateProductForm = () => {
                 required
                 >
                     <option value=''>Select a category</option>
-                    {categories.map((category) => (
-                        <option key={category} value={category}>
-                            {category}
+                    {availableCategories.map((category) => (
+                        <option key={category.value} value={category.value}>
+                            {category.label}
                         </option>
                     ))}
                 </select>

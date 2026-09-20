@@ -6,7 +6,24 @@ export const brands = [
     description: "Small-batch skincare made for slow, intentional moments of care.",
     accent: "#7C9279",
     soft: "#E6EEE3",
-    categories: ["skincare", "body-care", "self-care"],
+    categories: [
+      "hard-bar-soap",
+      "seasonal-hard-bar-soap",
+      "butter-balm",
+      "bath-bombs",
+      "seasonal-bath-bombs",
+      "body-polish",
+      "sugar-scrub",
+      "mens-beard-oil",
+      "mens-whipped-butter",
+      "mens-massage-oil",
+      "baby-wash",
+      "baby-butter",
+      "baby-oil",
+      "diaper-balm",
+      "lip-gloss",
+      "seasonal-lip-gloss",
+    ],
   },
   {
     slug: "the-krafted-charm",
@@ -29,3 +46,22 @@ export const brands = [
 ];
 
 export const getBrand = (slug) => brands.find((brand) => brand.slug === slug);
+
+export const botaniCollections = [
+  { slug: "hard-bar-soap", label: "Hard Bar Soap", group: "bath-body" },
+  { slug: "seasonal-hard-bar-soap", label: "Seasonal Hard Bar Soap", group: "seasonal" },
+  { slug: "butter-balm", label: "Butter Balm", group: "bath-body" },
+  { slug: "bath-bombs", label: "Bath Bombs", group: "bath-body" },
+  { slug: "seasonal-bath-bombs", label: "Seasonal Bath Bombs", group: "seasonal" },
+  { slug: "body-polish", label: "Body Polish", group: "bath-body" },
+  { slug: "sugar-scrub", label: "Sugar Scrub", group: "bath-body" },
+  { slug: "mens-beard-oil", label: "Beard Oil", group: "men" },
+  { slug: "mens-whipped-butter", label: "Men’s Whipped Butter", group: "men" },
+  { slug: "mens-massage-oil", label: "Massage Oil", group: "men" },
+  { slug: "baby-wash", label: "Baby Wash", group: "baby" },
+  { slug: "baby-butter", label: "Baby Butter", group: "baby" },
+  { slug: "baby-oil", label: "Baby Oil", group: "baby" },
+  { slug: "diaper-balm", label: "Diaper Balm", group: "baby" },
+  { slug: "lip-gloss", label: "Original Lip Gloss", group: "lip-gloss" },
+  { slug: "seasonal-lip-gloss", label: "Seasonal Lip Gloss", group: "lip-gloss" },
+];

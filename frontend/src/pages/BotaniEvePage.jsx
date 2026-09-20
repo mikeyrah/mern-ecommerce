@@ -1,47 +1,69 @@
-import { useEffect } from "react";
-import { ArrowRight, Leaf, Search, ShoppingBag, Sparkles, UserRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Droplets, Leaf, Search, ShoppingBag, Sparkles, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useProductStore } from "../stores/useProductStore";
+import { botaniCollections } from "../data/brands";
 
 const categories = [
-  { label: "New", href: "#collection" },
-  { label: "Skincare", href: "/category/skincare" },
-  { label: "Body Care", href: "/category/body-care" },
-  { label: "Self Care", href: "/category/self-care" },
-  { label: "Gift Sets", href: "#rituals" },
+  { label: "Shop All", filter: "all" },
+  { label: "Bath & Body", filter: "bath-body" },
+  { label: "Seasonal", filter: "seasonal" },
+  { label: "Men", filter: "men" },
+  { label: "Baby", filter: "baby" },
+  { label: "Lip Gloss", filter: "lip-gloss" },
 ];
 
 const rituals = [
   {
-    title: "Daily glow",
-    copy: "Gentle essentials for calm, balanced, luminous skin.",
-    category: "skincare",
+    title: "Bath & body",
+    copy: "Bar soaps, bath bombs, balms, polishes, and scrubs for everyday care.",
+    group: "bath-body",
     tone: "bg-[#dfe9db]",
     icon: Sparkles,
   },
   {
-    title: "Body renewal",
-    copy: "Nourishing textures that turn the everyday into a ritual.",
-    category: "body-care",
+    title: "For him",
+    copy: "Grounded essentials including beard oil, whipped butter, and massage oil.",
+    group: "men",
     tone: "bg-[#efe5d5]",
     icon: Leaf,
   },
   {
-    title: "Slow moments",
-    copy: "Restorative care made for unwinding and reconnecting.",
-    category: "self-care",
+    title: "Lip ritual",
+    copy: "Original and seasonal glosses made for effortless shine.",
+    group: "lip-gloss",
     tone: "bg-[#e5dfeb]",
-    icon: Sparkles,
+    icon: Droplets,
   },
 ];
 
 const BotaniEvePage = () => {
   const { fetchProductsByBrand, products, loading } = useProductStore();
+  const [activeGroup, setActiveGroup] = useState("all");
+  const [activeCollection, setActiveCollection] = useState("all");
 
   useEffect(() => {
     fetchProductsByBrand("botani-eve");
   }, [fetchProductsByBrand]);
+
+  const availableCollections = useMemo(
+    () => activeGroup === "all" ? botaniCollections : botaniCollections.filter((item) => item.group === activeGroup),
+    [activeGroup]
+  );
+
+  const visibleProducts = useMemo(() => {
+    if (activeCollection !== "all") return products.filter((product) => product.category === activeCollection);
+    if (activeGroup === "all") return products;
+    const groupCategories = new Set(botaniCollections.filter((item) => item.group === activeGroup).map((item) => item.slug));
+    return products.filter((product) => groupCategories.has(product.category));
+  }, [activeCollection, activeGroup, products]);
+
+  const selectGroup = (group) => {
+    setActiveGroup(group);
+    setActiveCollection("all");
+    document.querySelector("#collection")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <main className="min-h-screen bg-[#f8f6ef] text-[#203128]">
@@ -66,10 +88,10 @@ const BotaniEvePage = () => {
         </div>
 
         <nav className="botani-nav mx-auto flex max-w-5xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-xs font-bold uppercase tracking-[0.15em] text-[#46584c] sm:justify-center sm:px-8" aria-label="Botani Eve shop categories">
-          {categories.map((category) => category.href.startsWith("/") ? (
-            <Link key={category.label} to={category.href} className="whitespace-nowrap transition hover:text-[#9a6d45]">{category.label}</Link>
-          ) : (
-            <a key={category.label} href={category.href} className="whitespace-nowrap transition hover:text-[#9a6d45]">{category.label}</a>
+          {categories.map((category) => (
+            <button key={category.label} type="button" onClick={() => selectGroup(category.filter)} className={`whitespace-nowrap border-b pb-1 transition ${activeGroup === category.filter ? "border-[#314b3b] text-[#203128]" : "border-transparent hover:text-[#9a6d45]"}`}>
+              {category.label}
+            </button>
           ))}
         </nav>
       </header>
@@ -117,15 +139,26 @@ const BotaniEvePage = () => {
         </div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {rituals.map(({ title, copy, category, tone, icon: Icon }) => (
-            <Link key={title} to={`/category/${category}`} className={`${tone} group rounded-[1.75rem] p-8 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>
+          {rituals.map(({ title, copy, group, tone, icon: Icon }) => (
+            <button type="button" key={title} onClick={() => selectGroup(group)} className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>
               <Icon size={25} strokeWidth={1.5} className="text-[#506755]" />
               <h3 className="mt-16 font-serif text-3xl text-[#263b2e]">{title}</h3>
               <p className="mt-3 min-h-12 text-sm leading-6 text-[#5f6c63]">{copy}</p>
               <span className="mt-7 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#3f5947]">Explore <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span>
-            </Link>
+            </button>
           ))}
         </div>
+        <button type="button" onClick={() => selectGroup("baby")} className="group mt-5 grid w-full overflow-hidden rounded-[1.75rem] bg-[#e8eee7] text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)] sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="p-8 sm:p-10">
+            <Leaf size={25} strokeWidth={1.5} className="text-[#66806c]" />
+            <h3 className="mt-8 font-serif text-3xl text-[#263b2e]">Gentle care for baby</h3>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#5f6c63]">Soft, comforting essentials for delicate skin—from bath time to bedtime.</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#3f5947]">Explore baby care <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span>
+          </div>
+          <div className="flex min-h-44 items-center justify-center bg-[#d7e2d5] px-14 text-[#4f6b56] sm:min-h-full">
+            <span className="rounded-full border border-[#8fa393] p-7 font-serif text-3xl">Baby</span>
+          </div>
+        </button>
       </section>
 
       <section id="collection" className="border-y border-[#dce0d8] bg-white/70 px-5 py-20 sm:px-8 lg:py-24">
@@ -138,19 +171,30 @@ const BotaniEvePage = () => {
             <p className="max-w-sm text-sm leading-6 text-[#6a756d]">Small-batch care designed for consistency, comfort, and a little everyday beauty.</p>
           </div>
 
+          <div className="mt-8 flex gap-2 overflow-x-auto pb-2" aria-label="Filter Botani Eve collections">
+            <button type="button" onClick={() => setActiveCollection("all")} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${activeCollection === "all" ? "border-[#314b3b] bg-[#314b3b] text-white" : "border-[#cdd5cb] bg-white text-[#506055] hover:border-[#718674]"}`}>
+              All {activeGroup === "all" ? "products" : categories.find((item) => item.filter === activeGroup)?.label}
+            </button>
+            {availableCollections.map((collection) => (
+              <button type="button" key={collection.slug} onClick={() => setActiveCollection(collection.slug)} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${activeCollection === collection.slug ? "border-[#314b3b] bg-[#314b3b] text-white" : "border-[#cdd5cb] bg-white text-[#506055] hover:border-[#718674]"}`}>
+                {collection.label}
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[0, 1, 2, 3].map((item) => <div key={item} className="h-96 animate-pulse rounded-2xl bg-[#e8ece5]" />)}
             </div>
-          ) : products.length ? (
+          ) : visibleProducts.length ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product) => <ProductCard key={product._id} product={product} />)}
+              {visibleProducts.map((product) => <ProductCard key={product._id} product={product} />)}
             </div>
           ) : (
             <div className="mt-10 rounded-[1.75rem] border border-dashed border-[#bfcbbf] bg-[#f2f5ef] px-6 py-14 text-center">
               <Leaf className="mx-auto text-[#78907b]" strokeWidth={1.5} />
-              <h3 className="mt-4 font-serif text-2xl text-[#314b3b]">Our first ritual is taking root</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#68746b]">New Botani Eve essentials are being prepared. Check back soon for the collection.</p>
+              <h3 className="mt-4 font-serif text-2xl text-[#314b3b]">This collection is taking root</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#68746b]">Products assigned to this collection will appear here as soon as they are added.</p>
             </div>
           )}
         </div>
