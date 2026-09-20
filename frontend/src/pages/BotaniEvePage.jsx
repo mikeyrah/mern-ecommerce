@@ -8,10 +8,10 @@ import { botaniCollections } from "../data/brands";
 const categories = [
   { label: "Shop All", filter: "all" },
   { label: "Bath & Body", filter: "bath-body", href: "/brands/botani-eve/bath-body" },
-  { label: "Seasonal", filter: "seasonal" },
-  { label: "Men", filter: "men" },
-  { label: "Baby", filter: "baby" },
-  { label: "Lip Gloss", filter: "lip-gloss" },
+  { label: "Seasonal", filter: "seasonal", href: "/brands/botani-eve/seasonal" },
+  { label: "Men", filter: "men", href: "/brands/botani-eve/men" },
+  { label: "Baby", filter: "baby", href: "/brands/botani-eve/baby" },
+  { label: "Lip Gloss", filter: "lip-gloss", href: "/brands/botani-eve/lip-gloss" },
 ];
 
 const rituals = [
@@ -154,8 +154,9 @@ const BotaniEvePage = () => {
               <h3 className="mt-16 font-serif text-3xl text-[#263b2e]">{title}</h3>
               <p className="mt-3 min-h-12 text-sm leading-6 text-[#5f6c63]">{copy}</p>
               <span className="mt-7 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#3f5947]">Explore <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span></>;
-            return group === "bath-body" ? (
-              <Link key={title} to="/brands/botani-eve/bath-body" className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>{content}</Link>
+            const destination = group === "bath-body" ? "/brands/botani-eve/bath-body" : group === "men" ? "/brands/botani-eve/men" : group === "lip-gloss" ? "/brands/botani-eve/lip-gloss" : null;
+            return destination ? (
+              <Link key={title} to={destination} className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>{content}</Link>
             ) : (
               <button type="button" key={title} onClick={() => selectGroup(group)} className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>
                 {content}
@@ -163,7 +164,7 @@ const BotaniEvePage = () => {
             );
           })}
         </div>
-        <button type="button" onClick={() => selectGroup("baby")} className="group mt-5 grid w-full overflow-hidden rounded-[1.75rem] bg-[#e8eee7] text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)] sm:grid-cols-[1fr_auto] sm:items-center">
+        <Link to="/brands/botani-eve/baby" className="group mt-5 grid w-full overflow-hidden rounded-[1.75rem] bg-[#e8eee7] text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)] sm:grid-cols-[1fr_auto] sm:items-center">
           <div className="p-8 sm:p-10">
             <Leaf size={25} strokeWidth={1.5} className="text-[#66806c]" />
             <h3 className="mt-8 font-serif text-3xl text-[#263b2e]">Gentle care for baby</h3>
@@ -173,7 +174,7 @@ const BotaniEvePage = () => {
           <div className="flex min-h-44 items-center justify-center bg-[#d7e2d5] px-14 text-[#4f6b56] sm:min-h-full">
             <span className="rounded-full border border-[#8fa393] p-7 font-serif text-3xl">Baby</span>
           </div>
-        </button>
+        </Link>
       </section>
 
       <section id="collection" className="border-y border-[#dce0d8] bg-white/70 px-5 py-20 sm:px-8 lg:py-24">
