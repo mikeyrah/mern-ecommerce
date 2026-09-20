@@ -7,7 +7,7 @@ import { botaniCollections } from "../data/brands";
 
 const categories = [
   { label: "Shop All", filter: "all" },
-  { label: "Bath & Body", filter: "bath-body" },
+  { label: "Bath & Body", filter: "bath-body", href: "/brands/botani-eve/bath-body" },
   { label: "Seasonal", filter: "seasonal" },
   { label: "Men", filter: "men" },
   { label: "Baby", filter: "baby" },
@@ -95,9 +95,13 @@ const BotaniEvePage = () => {
 
         <nav className="botani-nav mx-auto flex max-w-5xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-xs font-bold uppercase tracking-[0.15em] text-[#46584c] sm:justify-center sm:px-8" aria-label="Botani Eve shop categories">
           {categories.map((category) => (
-            <button key={category.label} type="button" onClick={() => selectGroup(category.filter)} className={`whitespace-nowrap border-b pb-1 transition ${activeGroup === category.filter ? "border-[#314b3b] text-[#203128]" : "border-transparent hover:text-[#9a6d45]"}`}>
-              {category.label}
-            </button>
+            category.href ? (
+              <Link key={category.label} to={category.href} className="whitespace-nowrap border-b border-transparent pb-1 transition hover:text-[#9a6d45]">{category.label}</Link>
+            ) : (
+              <button key={category.label} type="button" onClick={() => selectGroup(category.filter)} className={`whitespace-nowrap border-b pb-1 transition ${activeGroup === category.filter ? "border-[#314b3b] text-[#203128]" : "border-transparent hover:text-[#9a6d45]"}`}>
+                {category.label}
+              </button>
+            )
           ))}
         </nav>
       </header>
@@ -145,14 +149,19 @@ const BotaniEvePage = () => {
         </div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {rituals.map(({ title, copy, group, tone, icon: Icon }) => (
-            <button type="button" key={title} onClick={() => selectGroup(group)} className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>
-              <Icon size={25} strokeWidth={1.5} className="text-[#506755]" />
+          {rituals.map(({ title, copy, group, tone, icon: Icon }) => {
+            const content = <><Icon size={25} strokeWidth={1.5} className="text-[#506755]" />
               <h3 className="mt-16 font-serif text-3xl text-[#263b2e]">{title}</h3>
               <p className="mt-3 min-h-12 text-sm leading-6 text-[#5f6c63]">{copy}</p>
-              <span className="mt-7 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#3f5947]">Explore <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span>
+              <span className="mt-7 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#3f5947]">Explore <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span></>;
+            return group === "bath-body" ? (
+              <Link key={title} to="/brands/botani-eve/bath-body" className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>{content}</Link>
+            ) : (
+              <button type="button" key={title} onClick={() => selectGroup(group)} className={`${tone} group rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)]`}>
+                {content}
             </button>
-          ))}
+            );
+          })}
         </div>
         <button type="button" onClick={() => selectGroup("baby")} className="group mt-5 grid w-full overflow-hidden rounded-[1.75rem] bg-[#e8eee7] text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(49,75,59,0.12)] sm:grid-cols-[1fr_auto] sm:items-center">
           <div className="p-8 sm:p-10">
