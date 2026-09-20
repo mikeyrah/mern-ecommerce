@@ -86,6 +86,57 @@ export const getFeaturedProducts = async (req, res) => {
         }
     };
 
+    export const updateProduct = async (req, res) => {
+        try {
+            const product = await Product.findById(req.params.id);
+
+            if (!product) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+
+            const { name, description, price, image, category, brand } = req.body;
+
+            if (!name || !description || price === "" || price === undefined || !category || !brand) {
+                return res.status(400).json({ message: "Name, description, price, category, and brand are required" });
+            }
+
+            const numericPrice = Number(price);
+            if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+                return res.status(400).json({ message: "Price must be a valid positive number" });
+            }
+
+            const previousImage = product.image;
+            let nextImage = previousImage;
+
+            if (typeof image === "string" && image.startsWith("data:")) {
+                const cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "products" });
+                nextImage = cloudinaryResponse.secure_url;
+            }
+
+            product.name = name.trim();
+            product.description = description.trim();
+            product.price = numericPrice;
+            product.category = category;
+            product.brand = brand;
+            product.image = nextImage;
+
+            const updatedProduct = await product.save();
+
+            if (nextImage !== previousImage && previousImage) {
+                const publicId = previousImage.split("/").pop().split(".")[0];
+                cloudinary.uploader.destroy(`products/${publicId}`).catch((error) => {
+                    console.log("Error deleting replaced image from Cloudinary", error.message);
+                });
+            }
+
+            await updateFeaturedProductsCache();
+            return res.json({ product: updatedProduct });
+        } catch (error) {
+            console.log("Error in updateProduct controller", error.message);
+            return res.status(500).json({ message: "Server error", error: error.message });
+        }
+    };
+
     export const getRecommendedProducts = async (req, res) => {
         try {
             const products = await Product.aggregate([

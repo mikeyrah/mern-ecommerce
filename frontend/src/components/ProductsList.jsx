@@ -1,12 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from "framer-motion";
-import { Trash, Star } from "lucide-react";
+import { Pencil, Trash, Star } from "lucide-react";
 import { useProductStore } from '../stores/useProductStore';
+import EditProductModal from './EditProductModal';
 
 const ProductsList = () => {
     const { deleteProduct, toggleFeaturedProduct, products } = useProductStore();
-
-    console.log("products", products);
+    const [editingProduct, setEditingProduct] = useState(null);
 
   return (
     <motion.div
@@ -16,7 +16,8 @@ const ProductsList = () => {
     transition={{ duration: 0.8 }}
     >
 
-        <table className=' min-w-full divide-y divide-gray-700'>
+        <div className="overflow-x-auto">
+        <table className='min-w-full divide-y divide-gray-700'>
             <thead className='bg-gray-700'>
                 <tr>
                     <th
@@ -86,17 +87,29 @@ const ProductsList = () => {
                                                 </button>
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
+                                            <div className="flex items-center gap-3">
+                                            <button
+                                            onClick={() => setEditingProduct(product)}
+                                            className='text-[#6f856c] hover:text-[#435641]'
+                                            aria-label={`Edit ${product.name}`}
+                                            >
+                                                <Pencil className='h-5 w-5' />
+                                            </button>
                                             <button
                                             onClick={() => deleteProduct(product._id)}
                                             className='text-red-400 hover:text-red-300'
+                                            aria-label={`Delete ${product.name}`}
                                             >
                                                 <Trash className='h-5 w-5' />
                                             </button>
+                                            </div>
                                         </td>
                                         </tr>
                 ))}
             </tbody>
         </table>
+        </div>
+        {editingProduct && <EditProductModal product={editingProduct} onClose={() => setEditingProduct(null)} />}
     </motion.div>
   );
 };
