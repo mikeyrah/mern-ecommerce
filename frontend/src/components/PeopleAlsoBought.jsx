@@ -27,14 +27,15 @@ const PeopleAlsoBought = () => {
   if(isLoading) return <LoadingSpinner />;
 
   return (
-    <div className='mt-8'>
-      <h3 className='text-2xl font-semibold text-emerald-400'>People also bought</h3>
+    <section className='mt-14 border-t border-[#ded8ca] pt-10'>
+      <p className='text-xs font-bold uppercase tracking-[0.22em] text-[#78907b]'>A little more to love</p>
+      <h3 className='mt-2 font-serif text-3xl text-[#27352b]'>You may also enjoy</h3>
       <div className='mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {recommendations.map((product) => (
           <ProductCard key={product._id} product={product} />
         ))}
         </div> 
-    </div>
+    </section>
   )
 }
 
