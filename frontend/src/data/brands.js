@@ -24,6 +24,7 @@ export const brands = [
       "diaper-balm",
       "lip-gloss",
       "seasonal-lip-gloss",
+      "candles",
     ],
   },
   {
@@ -66,4 +67,5 @@ export const botaniCollections = [
   { slug: "diaper-balm", label: "Diaper Balm", group: "baby" },
   { slug: "lip-gloss", label: "Original Lip Gloss", group: "lip-gloss" },
   { slug: "seasonal-lip-gloss", label: "Seasonal Lip Gloss", group: "lip-gloss" },
+  { slug: "candles", label: "Candles", group: "home-scents" },
 ];

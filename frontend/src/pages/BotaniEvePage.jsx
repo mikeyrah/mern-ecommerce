@@ -12,6 +12,7 @@ const categories = [
   { label: "Men", filter: "men", href: "/brands/botani-eve/men" },
   { label: "Baby", filter: "baby", href: "/brands/botani-eve/baby" },
   { label: "Lip Gloss", filter: "lip-gloss", href: "/brands/botani-eve/lip-gloss" },
+  { label: "Home Scents", filter: "home-scents", href: "/brands/botani-eve/home-scents" },
 ];
 
 const rituals = [
@@ -71,6 +72,12 @@ const BotaniEvePage = () => {
     document.querySelector("#collection")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const selectHeroCollection = (collection) => {
+    setActiveGroup("bath-body");
+    setActiveCollection(collection);
+    document.querySelector("#collection")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <main className="min-h-screen bg-[#f8f6ef] text-[#203128]">
       <p className="bg-[#314b3b] px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f8f6ef]">
@@ -121,22 +128,25 @@ const BotaniEvePage = () => {
             </a>
           </div>
 
-          <div className="botani-still-life relative min-h-[430px] self-stretch md:min-h-[560px]" aria-label="Botani Eve botanical skincare collection">
+          <div className="botani-still-life relative min-h-[430px] self-stretch md:min-h-[560px]" aria-label="Shop featured Botani Eve rituals">
             <div className="botani-sun" />
             <div className="botani-leaf botani-leaf-one" />
             <div className="botani-leaf botani-leaf-two" />
-            <div className="botani-bottle botani-bottle-tall">
+            <p className="absolute left-1/2 top-8 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/65 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#526457] backdrop-blur-sm">
+              Tap a ritual to shop
+            </p>
+            <button type="button" onClick={() => selectHeroCollection("body-polish")} className="botani-bottle botani-bottle-tall botani-product-control" aria-label="Shop body polish">
               <span>BOTANI<br />EVE</span>
-              <small>BODY OIL</small>
-            </div>
-            <div className="botani-bottle botani-bottle-short">
+              <small>BODY POLISH</small>
+            </button>
+            <button type="button" onClick={() => selectHeroCollection("sugar-scrub")} className="botani-bottle botani-bottle-short botani-product-control" aria-label="Shop sugar scrub">
               <span>BOTANI<br />EVE</span>
-              <small>DAILY DEW</small>
-            </div>
-            <div className="botani-jar">
+              <small>SUGAR SCRUB</small>
+            </button>
+            <button type="button" onClick={() => selectHeroCollection("butter-balm")} className="botani-jar botani-product-control" aria-label="Shop butter balm">
               <span>BOTANI EVE</span>
-              <small>RESTORE</small>
-            </div>
+              <small>BUTTER BALM</small>
+            </button>
           </div>
         </div>
       </section>

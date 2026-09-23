@@ -91,6 +91,15 @@ const BotaniCollectionPage = () => {
           <Link to="/brands/botani-eve" className="text-center"><span className="block font-serif text-3xl font-semibold tracking-[0.08em] text-[#294233] sm:text-4xl">BOTANI EVE</span><span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.36em] text-[#718074]">Rooted in ritual</span></Link>
           <div className="flex items-center gap-4 text-[#314b3b]"><Search size={19} /><UserRound className="hidden sm:block" size={19} /><ShoppingBag size={19} /></div>
         </div>
+        <nav className="botani-nav mx-auto flex max-w-5xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#667469] sm:justify-center" aria-label="Botani Eve collections">
+          <Link to="/brands/botani-eve" className="whitespace-nowrap hover:text-[#314b3b]">Shop all</Link>
+          <Link to="/brands/botani-eve/bath-body" className="whitespace-nowrap hover:text-[#314b3b]">Bath &amp; body</Link>
+          <Link to="/brands/botani-eve/seasonal" className="whitespace-nowrap hover:text-[#314b3b]">Seasonal</Link>
+          <Link to="/brands/botani-eve/men" className={`whitespace-nowrap ${collection === "men" ? "border-b border-[#314b3b] pb-1 text-[#203128]" : "hover:text-[#314b3b]"}`}>Men</Link>
+          <Link to="/brands/botani-eve/baby" className={`whitespace-nowrap ${collection === "baby" ? "border-b border-[#314b3b] pb-1 text-[#203128]" : "hover:text-[#314b3b]"}`}>Baby</Link>
+          <Link to="/brands/botani-eve/lip-gloss" className={`whitespace-nowrap ${collection === "lip-gloss" ? "border-b border-[#314b3b] pb-1 text-[#203128]" : "hover:text-[#314b3b]"}`}>Lip gloss</Link>
+          <Link to="/brands/botani-eve/home-scents" className="whitespace-nowrap hover:text-[#314b3b]">Home scents</Link>
+        </nav>
       </header>
 
       <section className={`overflow-hidden ${config.hero}`}>

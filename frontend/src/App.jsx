@@ -12,6 +12,8 @@ import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchaseCancelPage from './pages/PurchaseCancelPage';
 import BrandPage from './pages/BrandPage';
 import BotaniBathBodyPage from './pages/BotaniBathBodyPage';
+import BotaniSeasonalPage from './pages/BotaniSeasonalPage';
+import BotaniHomeScentsPage from './pages/BotaniHomeScentsPage';
 import BotaniCollectionPage from './pages/BotaniCollectionPage';
 import ProductPage from './pages/ProductPage';
 import { useCartStore } from './stores/useCartStore';
@@ -58,6 +60,8 @@ function App() {
         <Route path='/secret-dashboard' element={user?.role === "admin" ? <AdminPage /> : <Navigate to='/login' />} />
         <Route path='/category/:category' element={ <CategoryPage /> } />
         <Route path='/brands/botani-eve/bath-body' element={<BotaniBathBodyPage />} />
+        <Route path='/brands/botani-eve/seasonal' element={<BotaniSeasonalPage />} />
+        <Route path='/brands/botani-eve/home-scents' element={<BotaniHomeScentsPage />} />
         <Route path='/brands/botani-eve/:collection' element={<BotaniCollectionPage />} />
         <Route path='/brands/:brand' element={<BrandPage />} />
         <Route path='/products/:id' element={<ProductPage />} />

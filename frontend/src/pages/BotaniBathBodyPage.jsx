@@ -58,13 +58,14 @@ const BotaniBathBodyPage = () => {
             <ShoppingBag size={19} />
           </div>
         </div>
-        <nav className="botani-nav mx-auto flex max-w-4xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#667469] sm:justify-center" aria-label="Botani Eve collections">
+        <nav className="botani-nav mx-auto flex max-w-5xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#667469] sm:justify-center" aria-label="Botani Eve collections">
           <Link to="/brands/botani-eve" className="whitespace-nowrap hover:text-[#314b3b]">Shop all</Link>
           <span className="whitespace-nowrap border-b border-[#314b3b] pb-1 text-[#203128]">Bath &amp; body</span>
           <Link to="/brands/botani-eve/seasonal" className="whitespace-nowrap hover:text-[#314b3b]">Seasonal</Link>
           <Link to="/brands/botani-eve/men" className="whitespace-nowrap hover:text-[#314b3b]">Men</Link>
           <Link to="/brands/botani-eve/baby" className="whitespace-nowrap hover:text-[#314b3b]">Baby</Link>
           <Link to="/brands/botani-eve/lip-gloss" className="whitespace-nowrap hover:text-[#314b3b]">Lip gloss</Link>
+          <Link to="/brands/botani-eve/home-scents" className="whitespace-nowrap hover:text-[#314b3b]">Home scents</Link>
         </nav>
       </header>
 

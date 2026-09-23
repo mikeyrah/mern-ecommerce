@@ -23,6 +23,9 @@
   .botani-still-life::after { content: ""; position: absolute; left: 6%; right: 5%; bottom: 12%; height: 12%; border-radius: 50%; background: rgba(44,62,49,.14); filter: blur(18px); }
   .botani-sun { position: absolute; width: 18rem; height: 18rem; top: 7%; right: 10%; border-radius: 9999px; background: rgba(250,245,226,.72); box-shadow: 0 0 0 1px rgba(255,255,255,.28); }
   .botani-bottle, .botani-jar { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2e4937; box-shadow: 0 30px 48px rgba(41,60,45,.18); }
+  .botani-product-control { cursor: pointer; border: 1px solid rgba(255,255,255,.3); transition: filter .25s ease, box-shadow .25s ease; transform-origin: bottom center; }
+  .botani-product-control:hover { filter: brightness(1.04); box-shadow: 0 35px 58px rgba(41,60,45,.27), 0 0 0 4px rgba(255,255,255,.38); }
+  .botani-product-control:focus-visible { outline: 3px solid #314b3b; outline-offset: 6px; box-shadow: 0 30px 48px rgba(41,60,45,.22); }
   .botani-bottle::before { content: ""; position: absolute; left: 24%; right: 24%; top: -14%; height: 16%; border-radius: .35rem .35rem 0 0; background: #294233; box-shadow: inset 0 5px rgba(255,255,255,.08); }
   .botani-bottle span, .botani-jar span { font-family: Georgia, serif; font-size: 1.1rem; line-height: .9; text-align: center; letter-spacing: .06em; }
   .botani-bottle small, .botani-jar small { margin-top: 1rem; font-size: .5rem; font-weight: 700; letter-spacing: .18em; }
