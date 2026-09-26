@@ -10,6 +10,8 @@ const PurchaseSuccessPage = () => {
   const { clearCart } = useCartStore();
   const [message, setMessage] = useState("Confirming your payment…");
   const [orderId, setOrderId] = useState(null);
+  const [deliveryMethod, setDeliveryMethod] = useState("shipping");
+  const [pickupLocation, setPickupLocation] = useState("");
   const hasConfirmed = useRef(false);
 
   useEffect(() => {
@@ -24,6 +26,8 @@ const PurchaseSuccessPage = () => {
       .then(({ data }) => {
         clearCart();
         setOrderId(data.orderId);
+        setDeliveryMethod(data.deliveryMethod || "shipping");
+        setPickupLocation(data.pickupLocation || "");
         setMessage(data.message || "Payment successful. Your order is confirmed.");
       })
       .catch((error) => {
@@ -65,8 +69,8 @@ const PurchaseSuccessPage = () => {
               </span>
             </div>
             <div className='flex items-center justify-between'>
-              <span className='text-sm text-gray-400'>Estimated delivery</span>
-              <span className='text-sm font-semibold text-emerald-400'>3-5 business days</span>
+              <span className='text-sm text-gray-400'>{deliveryMethod === "pickup" ? "Fulfillment" : "Estimated delivery"}</span>
+              <span className='text-right text-sm font-semibold text-emerald-400'>{deliveryMethod === "pickup" ? (pickupLocation || "Local pickup") : "3-5 business days"}</span>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Box, CalendarDays, MapPin, PackageCheck, ShoppingBag, Truck } from "lucide-react";
+import { ArrowRight, Box, CalendarDays, MapPin, PackageCheck, Truck } from "lucide-react";
 import axios from "../lib/axios";
 
 const statusStyles = {
@@ -49,6 +49,7 @@ const OrderCard = ({ order }) => {
       <div className="min-w-64 space-y-4 rounded-2xl bg-[#f4f3ed] p-5">
         <div className="flex justify-between gap-8"><span className="text-sm text-[#747c75]">Total</span><strong className="font-serif text-xl text-[#b58a34]">${Number(order.totalAmount).toFixed(2)}</strong></div>
         {address?.line1 && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm text-[#687168]"><MapPin size={17} className="mt-0.5 shrink-0 text-[#78907b]" /><span>{address.line1}{address.line2 ? `, ${address.line2}` : ""}<br />{address.city}, {address.state} {address.postalCode}</span></div>}
+        {order.deliveryMethod === "pickup" && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm text-[#687168]"><MapPin size={17} className="mt-0.5 shrink-0 text-[#78907b]" /><span><strong className="block text-[#43503f]">Local pickup</strong>{order.pickupLocation || "Pickup details will be shared with you"}</span></div>}
         {order.trackingNumber && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm"><Truck size={17} className="text-[#78907b]" /><span><strong className="block text-[#43503f]">{order.carrier || "Shipment"}</strong><span className="text-[#687168]">{order.trackingNumber}</span></span></div>}
       </div>
     </div>

@@ -34,6 +34,14 @@ const orderSchema = new mongoose.Schema(
             required: true,
             min: 0,
         },
+        deliveryMethod: {
+            type: String,
+            enum: ["shipping", "pickup"],
+            default: "shipping",
+            index: true,
+        },
+        shippingAmount: { type: Number, min: 0, default: 0 },
+        pickupLocation: { type: String, default: "" },
         stripeSessionId: {
             type: String,
             unique: true,

@@ -7,11 +7,12 @@ import { stripe } from '../lib/stripe.js';
 
 export const createCheckoutSession = async (req,res) => {
     try {
-        const {products, couponCode} = req.body;
+        const {products, couponCode, deliveryMethod = "shipping"} = req.body;
 
         if (!Array.isArray(products) || products.length === 0) {
             return res.status(400).json({ error: "Invalid or empty products array" });
         }
+        if (!["shipping", "pickup"].includes(deliveryMethod)) return res.status(400).json({ message: "Invalid delivery method" });
 
         const requestedProducts = products.map((product) => ({
             id: product._id,
@@ -56,11 +57,29 @@ export const createCheckoutSession = async (req,res) => {
             }
         }
 
+        const shippingAmount = deliveryMethod === "shipping" && totalAmount < 7500
+            ? Math.max(0, Number(process.env.FLAT_SHIPPING_CENTS) || 700)
+            : 0;
+        const fulfillmentOptions = deliveryMethod === "shipping" ? {
+            shipping_address_collection: { allowed_countries: ["US"] },
+            shipping_options: [{
+                shipping_rate_data: {
+                    type: "fixed_amount",
+                    fixed_amount: { amount: shippingAmount, currency: "usd" },
+                    display_name: shippingAmount ? "Standard shipping" : "Free standard shipping",
+                    delivery_estimate: {
+                        minimum: { unit: "business_day", value: 3 },
+                        maximum: { unit: "business_day", value: 5 },
+                    },
+                },
+            }],
+        } : {};
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types:["card"],
             line_items: lineItems,
             mode:"payment",
-            shipping_address_collection: { allowed_countries: ["US"] },
+            ...fulfillmentOptions,
             success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
             discounts: coupon
@@ -73,6 +92,8 @@ export const createCheckoutSession = async (req,res) => {
             metadata: {
                 userId:req.user._id.toString(),
                 couponCode:couponCode || "",
+                deliveryMethod,
+                shippingAmount: String(shippingAmount),
                 products: JSON.stringify(
                     verifiedProducts.map((p) => ({
                         id: p._id.toString(),
@@ -90,7 +111,7 @@ export const createCheckoutSession = async (req,res) => {
         res.status(200).json({
             sessionId: session.id,
             url: session.url,
-            totalAmount: totalAmount / 100,
+            totalAmount: (totalAmount + shippingAmount) / 100,
         });
     } catch (error) {
         console.error("Error processing checkout:", error);
@@ -114,6 +135,8 @@ export const checkoutSuccess = async(req,res) => {
           success: true,
           message: "Payment was already recorded.",
           orderId: existingOrder._id,
+          deliveryMethod: existingOrder.deliveryMethod,
+          pickupLocation: existingOrder.pickupLocation,
         });
       }
       
@@ -137,6 +160,11 @@ export const checkoutSuccess = async(req,res) => {
             })),
             totalAmount: session.amount_total / 100,
             stripeSessionId: sessionId,
+            deliveryMethod: session.metadata.deliveryMethod || "shipping",
+            shippingAmount: Number(session.metadata.shippingAmount || 0) / 100,
+            pickupLocation: session.metadata.deliveryMethod === "pickup"
+                ? (process.env.PICKUP_LOCATION || "Stewart-Tate & Co., 970 N Oak St, Jackson, GA 30233. Pickup hours: 10 AM–6 PM. We'll notify you when your order is ready.")
+                : "",
             customerEmail: session.customer_details?.email || "",
             shippingAddress: session.shipping_details?.address ? {
                 name: session.shipping_details.name || "",
@@ -162,6 +190,8 @@ export const checkoutSuccess = async(req,res) => {
             success: true,
             message: "Payment successful, order created, and coupon deactivated if used.",
             orderId: newOrder._id,
+            deliveryMethod: newOrder.deliveryMethod,
+            pickupLocation: newOrder.pickupLocation,
         });
     } catch (error) {
         console.error("Error processing successful checkout:", error);
