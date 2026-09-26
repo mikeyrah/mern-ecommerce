@@ -64,4 +64,18 @@ export const sendOrderStatusUpdate = (order, recipient) => {
         html: layout("Order update", statusCopy[order.fulfillmentStatus], `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(recipient.name || "there")}, order <strong>${escapeHtml(order.orderNumber)}</strong> is now <strong>${escapeHtml(order.fulfillmentStatus)}</strong>.</p>${order.deliveryMethod === "pickup" && order.fulfillmentStatus === "processing" ? fulfillment(order) : tracking}${storeUrl() ? `<p style="margin-top:24px"><a href="${storeUrl()}/orders" style="display:inline-block;background:#314b3b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px">View order details</a></p>` : ""}`),
     });
 };
+
+export const sendReturnStatusUpdate = (order, recipient) => {
+    const refunded = order.returnRequest?.status === "refunded";
+    const title = refunded ? "Your refund has been issued." : "Your return request was reviewed.";
+    const message = refunded
+        ? `We issued a ${money(order.returnRequest.refundAmount || order.totalAmount)} refund for order <strong>${escapeHtml(order.orderNumber)}</strong>. Your bank may take several business days to post it.`
+        : `We’re unable to approve the return request for order <strong>${escapeHtml(order.orderNumber)}</strong> at this time.`;
+    const note = order.returnRequest?.adminNote ? `<p style="padding:16px;background:#edf3e9;border-radius:12px;line-height:1.6"><strong>Note from Stewart-Tate &amp; Co.</strong><br>${escapeHtml(order.returnRequest.adminNote)}</p>` : "";
+    return sendEmail({
+        to: recipient.email,
+        subject: `${order.orderNumber}: ${refunded ? "refund issued" : "return update"}`,
+        html: layout("Returns & refunds", title, `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(recipient.name || "there")}, ${message}</p>${note}`),
+    });
+};
 import nodemailer from "nodemailer";

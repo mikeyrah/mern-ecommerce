@@ -161,6 +161,7 @@ export const checkoutSuccess = async(req,res) => {
             })),
             totalAmount: session.amount_total / 100,
             stripeSessionId: sessionId,
+            stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || "",
             deliveryMethod: session.metadata.deliveryMethod || "shipping",
             shippingAmount: Number(session.metadata.shippingAmount || 0) / 100,
             pickupLocation: session.metadata.deliveryMethod === "pickup"

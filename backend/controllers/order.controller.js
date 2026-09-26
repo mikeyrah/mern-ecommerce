@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
-import { sendOrderStatusUpdate } from "../lib/email.js";
+import { stripe } from "../lib/stripe.js";
+import { sendOrderStatusUpdate, sendReturnStatusUpdate } from "../lib/email.js";
 
 const statuses = new Set(["placed", "processing", "shipped", "delivered", "cancelled"]);
 
@@ -80,5 +81,71 @@ export const updateOrder = async (req, res) => {
         res.json({ order: updated });
     } catch (error) {
         res.status(500).json({ message: "Unable to update order" });
+    }
+};
+
+export const requestReturn = async (req, res) => {
+    try {
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+        if (!order) return res.status(404).json({ message: "Order not found" });
+        if (order.paymentStatus !== "paid") return res.status(409).json({ message: "This order is not eligible for a return" });
+        if (!["processing", "shipped", "delivered"].includes(order.fulfillmentStatus)) return res.status(409).json({ message: "This order is not currently eligible for a return" });
+        if (order.returnRequest?.status && order.returnRequest.status !== "none" && order.returnRequest.status !== "rejected") return res.status(409).json({ message: "A return request already exists for this order" });
+
+        const reason = String(req.body?.reason || "").trim();
+        const customerNote = String(req.body?.customerNote || "").trim();
+        if (!reason) return res.status(400).json({ message: "Please select a return reason" });
+        order.returnRequest = { status: "requested", reason, customerNote, requestedAt: new Date() };
+        await order.save();
+        const updated = await populatedOrder(Order.findById(order._id));
+        res.status(201).json({ order: updated, message: "Return request submitted" });
+    } catch (error) {
+        res.status(500).json({ message: "Unable to submit return request" });
+    }
+};
+
+export const reviewReturn = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+        if (order.returnRequest?.status !== "requested") return res.status(409).json({ message: "This return request has already been reviewed" });
+        const action = String(req.body?.action || "");
+        if (!["approve", "reject"].includes(action)) return res.status(400).json({ message: "Choose approve or reject" });
+
+        order.returnRequest.adminNote = String(req.body?.adminNote || "").trim();
+        order.returnRequest.reviewedAt = new Date();
+        if (action === "reject") {
+            order.returnRequest.status = "rejected";
+        } else {
+            let paymentIntentId = order.stripePaymentIntentId;
+            if (!paymentIntentId) {
+                const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+                paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+            }
+            if (!paymentIntentId) return res.status(409).json({ message: "Stripe payment could not be located" });
+            const refund = await stripe.refunds.create({ payment_intent: paymentIntentId }, { idempotencyKey: `order-refund-${order._id}` });
+            order.stripePaymentIntentId = paymentIntentId;
+            order.paymentStatus = "refunded";
+            order.returnRequest.status = "refunded";
+            order.returnRequest.refundId = refund.id;
+            order.returnRequest.refundAmount = refund.amount / 100;
+            order.returnRequest.refundedAt = new Date();
+            if (!order.inventoryRestocked) {
+                await Promise.all(order.products.map((item) => Product.updateOne(
+                    { _id: item.product, trackInventory: true },
+                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }]
+                )));
+                order.inventoryRestocked = true;
+            }
+        }
+        await order.save();
+        const customer = await User.findById(order.user).select("name email").lean();
+        sendReturnStatusUpdate(order, { name: customer?.name, email: order.customerEmail || customer?.email })
+            .catch((emailError) => console.error("Return email failed:", emailError.message));
+        const updated = await populatedOrder(Order.findById(order._id));
+        res.json({ order: updated, message: action === "approve" ? "Refund issued" : "Return request declined" });
+    } catch (error) {
+        console.error("Return review failed:", error);
+        res.status(500).json({ message: error?.type?.startsWith("Stripe") ? error.message : "Unable to review return request" });
     }
 };

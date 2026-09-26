@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Box, CalendarDays, MapPin, PackageCheck, Truck } from "lucide-react";
+import { ArrowRight, Box, CalendarDays, Loader, MapPin, PackageCheck, RotateCcw, Truck } from "lucide-react";
+import { toast } from "react-hot-toast";
 import axios from "../lib/axios";
 
 const statusStyles = {
@@ -26,15 +27,29 @@ const OrdersPage = () => {
 
       <section className="mx-auto max-w-6xl px-5 pt-10 sm:px-8">
         {loading ? <div className="grid gap-5">{[1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-[1.75rem] bg-[#e6e9df]" />)}</div> : error ? <div className="rounded-2xl bg-red-50 p-6 text-center text-red-700">{error}</div> : !orders.length ? <EmptyOrders /> : (
-          <div className="space-y-6">{orders.map((order) => <OrderCard key={order._id} order={order} />)}</div>
+          <div className="space-y-6">{orders.map((order) => <OrderCard key={order._id} order={order} onUpdate={(updated) => setOrders((current) => current.map((item) => item._id === updated._id ? updated : item))} />)}</div>
         )}
       </section>
     </main>
   );
 };
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onUpdate }) => {
   const address = order.shippingAddress;
+  const [showReturn, setShowReturn] = useState(false);
+  const [reason, setReason] = useState("Changed my mind");
+  const [customerNote, setCustomerNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const returnStatus = order.returnRequest?.status || "none";
+  const canRequestReturn = order.paymentStatus === "paid" && ["processing", "shipped", "delivered"].includes(order.fulfillmentStatus) && ["none", "rejected"].includes(returnStatus);
+  const submitReturn = async () => {
+    setSubmitting(true);
+    try {
+      const { data } = await axios.post(`/orders/${order._id}/return`, { reason, customerNote });
+      onUpdate(data.order); setShowReturn(false); toast.success(data.message);
+    } catch (error) { toast.error(error.response?.data?.message || "Unable to submit return request"); }
+    finally { setSubmitting(false); }
+  };
   return <article className="overflow-hidden rounded-[1.75rem] border border-[#ded8ca] bg-white shadow-[0_15px_45px_rgba(49,75,59,0.07)]">
     <header className="flex flex-col justify-between gap-4 border-b border-[#e7e1d6] bg-[#fbfaf6] px-6 py-5 sm:flex-row sm:items-center">
       <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#78907b]">Order {order.orderNumber || `#${order._id.slice(-6).toUpperCase()}`}</p><p className="mt-1 flex items-center gap-2 text-sm text-[#687168]"><CalendarDays size={15} /> {new Date(order.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</p></div>
@@ -51,8 +66,11 @@ const OrderCard = ({ order }) => {
         {address?.line1 && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm text-[#687168]"><MapPin size={17} className="mt-0.5 shrink-0 text-[#78907b]" /><span>{address.line1}{address.line2 ? `, ${address.line2}` : ""}<br />{address.city}, {address.state} {address.postalCode}</span></div>}
         {order.deliveryMethod === "pickup" && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm text-[#687168]"><MapPin size={17} className="mt-0.5 shrink-0 text-[#78907b]" /><span><strong className="block text-[#43503f]">Local pickup</strong>{order.pickupLocation || "Pickup details will be shared with you"}</span></div>}
         {order.trackingNumber && <div className="flex gap-3 border-t border-[#dddace] pt-4 text-sm"><Truck size={17} className="text-[#78907b]" /><span><strong className="block text-[#43503f]">{order.carrier || "Shipment"}</strong><span className="text-[#687168]">{order.trackingNumber}</span></span></div>}
+        {returnStatus !== "none" && <div className="border-t border-[#dddace] pt-4 text-sm"><span className="rounded-full bg-[#e8eee4] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-[#526b57]">Return {returnStatus}</span>{order.returnRequest?.adminNote && <p className="mt-3 text-[#687168]">{order.returnRequest.adminNote}</p>}</div>}
+        {canRequestReturn && <button onClick={() => setShowReturn((current) => !current)} className="flex w-full items-center justify-center gap-2 rounded-full border border-[#6f856c] px-4 py-2.5 text-sm font-semibold text-[#526b57]"><RotateCcw size={16} /> Request a return</button>}
       </div>
     </div>
+    {showReturn && <div className="border-t border-[#e7e1d6] bg-[#fbfaf6] p-6"><div className="mx-auto max-w-2xl"><h3 className="font-serif text-2xl text-[#27352b]">Return this order</h3><p className="mt-2 text-sm leading-6 text-[#687168]">Tell us what happened. We’ll review your request before issuing a refund.</p><label className="mt-5 block text-sm font-semibold text-[#43503f]">Reason<select value={reason} onChange={(event) => setReason(event.target.value)} className="mt-2 w-full rounded-xl border border-[#dcd5c5] bg-white px-4 py-3 font-normal"><option>Changed my mind</option><option>Item arrived damaged</option><option>Wrong item received</option><option>Item did not meet expectations</option><option>Other</option></select></label><label className="mt-4 block text-sm font-semibold text-[#43503f]">Additional details<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} maxLength="1000" rows="3" className="mt-2 w-full rounded-xl border border-[#dcd5c5] bg-white px-4 py-3 font-normal" placeholder="Optional details to help us review your request" /></label><div className="mt-5 flex flex-wrap gap-3"><button onClick={submitReturn} disabled={submitting} className="inline-flex items-center gap-2 rounded-full bg-[#314b3b] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50">{submitting && <Loader size={16} className="animate-spin" />} Submit request</button><button onClick={() => setShowReturn(false)} className="rounded-full px-5 py-3 text-sm font-semibold text-[#687168]">Cancel</button></div></div></div>}
   </article>;
 };
 

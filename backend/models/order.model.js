@@ -46,6 +46,7 @@ const orderSchema = new mongoose.Schema(
             type: String,
             unique: true,
         },
+        stripePaymentIntentId: { type: String, default: "", index: true },
         paymentStatus: {
             type: String,
             enum: ["paid", "refunded", "partially-refunded"],
@@ -71,6 +72,22 @@ const orderSchema = new mongoose.Schema(
             changedAt: { type: Date, default: Date.now },
         }],
         inventoryRestocked: { type: Boolean, default: false },
+        returnRequest: {
+            status: {
+                type: String,
+                enum: ["none", "requested", "approved", "rejected", "refunded"],
+                default: "none",
+                index: true,
+            },
+            reason: { type: String, default: "", trim: true, maxlength: 1000 },
+            customerNote: { type: String, default: "", trim: true, maxlength: 1000 },
+            adminNote: { type: String, default: "", trim: true, maxlength: 1000 },
+            requestedAt: Date,
+            reviewedAt: Date,
+            refundedAt: Date,
+            refundId: { type: String, default: "" },
+            refundAmount: { type: Number, min: 0, default: 0 },
+        },
     },
     { timestamps: true }
 );
