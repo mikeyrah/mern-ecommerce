@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
+import { sendOrderStatusUpdate } from "../lib/email.js";
 
 const statuses = new Set(["placed", "processing", "shipped", "delivered", "cancelled"]);
 
@@ -47,7 +49,8 @@ export const updateOrder = async (req, res) => {
         const { fulfillmentStatus, trackingNumber, carrier, adminNote } = req.body ?? {};
         if (fulfillmentStatus && !statuses.has(fulfillmentStatus)) return res.status(400).json({ message: "Invalid order status" });
 
-        if (fulfillmentStatus && fulfillmentStatus !== order.fulfillmentStatus) {
+        const statusChanged = fulfillmentStatus && fulfillmentStatus !== order.fulfillmentStatus;
+        if (statusChanged) {
             if (fulfillmentStatus === "cancelled" && !order.inventoryRestocked) {
                 await Promise.all(order.products.map((item) => Product.updateOne(
                     { _id: item.product, trackInventory: true },
@@ -69,6 +72,11 @@ export const updateOrder = async (req, res) => {
         if (adminNote !== undefined) order.adminNote = String(adminNote).trim();
         await order.save();
         const updated = await populatedOrder(Order.findById(order._id));
+        if (statusChanged) {
+            const customer = await User.findById(order.user).select("name email").lean();
+            sendOrderStatusUpdate(order, { name: customer?.name, email: order.customerEmail || customer?.email })
+                .catch((emailError) => console.error("Order status email failed:", emailError.message));
+        }
         res.json({ order: updated });
     } catch (error) {
         res.status(500).json({ message: "Unable to update order" });

@@ -3,6 +3,7 @@ import Order from '../models/order.model.js'
 import User from '../models/user.model.js';
 import Product from '../models/product.model.js';
 import { stripe } from '../lib/stripe.js';
+import { sendNewOrderNotification, sendOrderConfirmation } from '../lib/email.js';
 
 
 export const createCheckoutSession = async (req,res) => {
@@ -185,6 +186,23 @@ export const checkoutSuccess = async(req,res) => {
             ]
         )));
         await User.findByIdAndUpdate(session.metadata.userId, { cartItems: [] });
+
+        const customer = await User.findById(session.metadata.userId).select("name email").lean();
+        const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL || "stewarttateandco@gmail.com";
+        const notifications = await Promise.allSettled([
+            sendOrderConfirmation(newOrder, {
+                name: customer?.name || session.customer_details?.name || "Customer",
+                email: newOrder.customerEmail || customer?.email,
+            }),
+            sendNewOrderNotification(
+                newOrder,
+                notificationEmail,
+                { name: customer?.name || session.customer_details?.name || "Customer" }
+            ),
+        ]);
+        notifications.filter((result) => result.status === "rejected").forEach((result) => {
+            console.error("Order email failed:", result.reason?.message || result.reason);
+        });
 
         res.status(200).json({
             success: true,
