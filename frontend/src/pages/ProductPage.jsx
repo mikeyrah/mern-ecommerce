@@ -37,8 +37,11 @@ const ProductPage = () => {
   }, [product]);
 
   const isRecentlyAdded = product && (product.isNew || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000);
+  const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
+  const isLowStock = product.trackInventory && product.stock > 0 && product.stock <= product.lowStockThreshold;
 
   const handleAddToBag = () => {
+    if (isOutOfStock) return toast.error("This product is currently out of stock");
     if (!user) return toast.error("Please sign in to add this product to your bag");
     addToCart(product);
   };
@@ -80,9 +83,10 @@ const ProductPage = () => {
           <h1 className="mt-3 font-serif text-5xl leading-tight text-[#27352b] sm:text-6xl">{product.name}</h1>
           <div className="mt-5 flex flex-wrap items-center gap-3"><Stars value={product.ratingAverage} /><a href="#reviews" className="text-sm text-[#667168] underline underline-offset-4">{product.ratingCount || 0} review{product.ratingCount === 1 ? "" : "s"}</a></div>
           <p className="mt-6 text-3xl font-semibold text-[#314b3b]">${Number(product.price).toFixed(2)}</p>
+          {isOutOfStock ? <p className="mt-3 text-sm font-semibold text-[#92584d]">Currently out of stock</p> : isLowStock ? <p className="mt-3 text-sm font-semibold text-[#9a742d]">Only {product.stock} left in stock</p> : product.trackInventory ? <p className="mt-3 text-sm font-semibold text-[#607660]">In stock and ready to ship</p> : null}
           <p className="mt-6 text-base leading-7 text-[#5e6961]">{product.description}</p>
 
-          <button type="button" onClick={handleAddToBag} className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-[#314b3b] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#263d30]"><ShoppingBag size={19} /> Add to bag</button>
+          <button type="button" onClick={handleAddToBag} disabled={isOutOfStock} className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-[#314b3b] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#263d30] disabled:cursor-not-allowed disabled:bg-[#aaa9a2]"><ShoppingBag size={19} /> {isOutOfStock ? "Sold out" : "Add to bag"}</button>
           <p className="mt-3 text-center text-xs text-[#7a827c]">Thoughtfully packed and prepared for you</p>
 
           <div className="mt-9 divide-y divide-[#d8d4c9] border-y border-[#d8d4c9]">

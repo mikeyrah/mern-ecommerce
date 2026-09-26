@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 
 const statuses = new Set(["placed", "processing", "shipped", "delivered", "cancelled"]);
 
@@ -47,6 +48,19 @@ export const updateOrder = async (req, res) => {
         if (fulfillmentStatus && !statuses.has(fulfillmentStatus)) return res.status(400).json({ message: "Invalid order status" });
 
         if (fulfillmentStatus && fulfillmentStatus !== order.fulfillmentStatus) {
+            if (fulfillmentStatus === "cancelled" && !order.inventoryRestocked) {
+                await Promise.all(order.products.map((item) => Product.updateOne(
+                    { _id: item.product, trackInventory: true },
+                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }]
+                )));
+                order.inventoryRestocked = true;
+            } else if (order.fulfillmentStatus === "cancelled" && order.inventoryRestocked) {
+                await Promise.all(order.products.map((item) => Product.updateOne(
+                    { _id: item.product, trackInventory: true },
+                    [{ $set: { stock: { $max: [0, { $subtract: ["$stock", item.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }]
+                )));
+                order.inventoryRestocked = false;
+            }
             order.fulfillmentStatus = fulfillmentStatus;
             order.statusHistory.push({ status: fulfillmentStatus, note: adminNote || "" });
         }

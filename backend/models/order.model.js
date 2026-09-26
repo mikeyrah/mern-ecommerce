@@ -62,6 +62,7 @@ const orderSchema = new mongoose.Schema(
             note: { type: String, default: "" },
             changedAt: { type: Date, default: Date.now },
         }],
+        inventoryRestocked: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

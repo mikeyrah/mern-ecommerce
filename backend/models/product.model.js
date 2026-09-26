@@ -38,6 +38,27 @@ const productSchema = new mongoose.Schema({
         min: 0,
         required: true,
     },
+    sku: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        default: "",
+        index: true,
+    },
+    trackInventory: {
+        type: Boolean,
+        default: false,
+    },
+    stock: {
+        type: Number,
+        min: 0,
+        default: 0,
+    },
+    lowStockThreshold: {
+        type: Number,
+        min: 0,
+        default: 5,
+    },
     image: {
         type: String,
         required: [true, 'Image is required']
@@ -86,6 +107,11 @@ const productSchema = new mongoose.Schema({
     reviews: {
         type: [reviewSchema],
         default: [],
+    },
+    soldCount: {
+        type: Number,
+        min: 0,
+        default: 0,
     },
 }, { timestamps: true });
 

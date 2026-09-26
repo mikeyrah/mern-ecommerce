@@ -86,6 +86,17 @@ export const useProductStore = create((set) => ({
             return false;
         }
     },
+    updateInventory: async (productId, inventoryData) => {
+        try {
+            const response = await axios.patch(`/products/${productId}/inventory`, inventoryData);
+            set((state) => ({ products: state.products.map((product) => product._id === productId ? response.data.product : product) }));
+            toast.success("Inventory updated");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Unable to update inventory");
+            return false;
+        }
+    },
     toggleFeaturedProduct: async (productId) => {
         set({ loading: true });
         try {

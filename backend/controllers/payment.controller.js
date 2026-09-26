@@ -25,6 +25,10 @@ export const createCheckoutSession = async (req,res) => {
         if (catalogProducts.length !== requestedProducts.length) return res.status(400).json({ message: "One or more products are unavailable" });
         const catalog = new Map(catalogProducts.map((product) => [product._id.toString(), product]));
         const verifiedProducts = requestedProducts.map((item) => ({ ...catalog.get(item.id), quantity: item.quantity }));
+        const unavailable = verifiedProducts.find((product) => product.trackInventory && product.quantity > product.stock);
+        if (unavailable) {
+            return res.status(409).json({ message: unavailable.stock ? `Only ${unavailable.stock} of ${unavailable.name} available` : `${unavailable.name} is out of stock` });
+        }
 
         let totalAmount = 0;
         const lineItems = verifiedProducts.map(product => {
@@ -146,6 +150,12 @@ export const checkoutSuccess = async(req,res) => {
         })
 
         await newOrder.save();
+        await Promise.all(products.map((product) => Product.updateOne(
+            { _id: product.id, trackInventory: true },
+            [
+                { $set: { stock: { $max: [0, { $subtract: ["$stock", product.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, product.quantity] } } },
+            ]
+        )));
         await User.findByIdAndUpdate(session.metadata.userId, { cartItems: [] });
 
         res.status(200).json({

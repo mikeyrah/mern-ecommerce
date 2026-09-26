@@ -47,7 +47,7 @@ export const getFeaturedProducts = async (req, res) => {
 
     export const createProduct = async (req, res) => {
         try {
-            const { name, description, price, image, images = [], category, brand, details = "", ingredients = [], isNew = false } = req.body;
+            const { name, description, price, image, images = [], category, brand, details = "", ingredients = [], isNew = false, sku = "", trackInventory = false, stock = 0, lowStockThreshold = 5 } = req.body;
 
             const imagePayloads = images.length ? images : image ? [image] : [];
             const uploadedImages = await uploadProductImages(imagePayloads);
@@ -67,6 +67,10 @@ export const getFeaturedProducts = async (req, res) => {
                 details,
                 ingredients: Array.isArray(ingredients) ? ingredients : String(ingredients).split(",").map((item) => item.trim()).filter(Boolean),
                 isNew,
+                sku,
+                trackInventory: Boolean(trackInventory),
+                stock: Math.max(0, Number(stock) || 0),
+                lowStockThreshold: Math.max(0, Number(lowStockThreshold) || 0),
             })
             res.status(201).json({ product });
         } catch (error) {
@@ -110,7 +114,7 @@ export const getFeaturedProducts = async (req, res) => {
                 return res.status(404).json({ message: "Product not found" });
             }
 
-            const { name, description, price, image, images, category, brand, details = "", ingredients = [], isNew = false } = req.body;
+            const { name, description, price, image, images, category, brand, details = "", ingredients = [], isNew = false, sku, trackInventory, stock, lowStockThreshold } = req.body;
 
             if (!name || !description || price === "" || price === undefined || !category || !brand) {
                 return res.status(400).json({ message: "Name, description, price, category, and brand are required" });
@@ -139,6 +143,10 @@ export const getFeaturedProducts = async (req, res) => {
             product.details = details.trim();
             product.ingredients = Array.isArray(ingredients) ? ingredients : String(ingredients).split(",").map((item) => item.trim()).filter(Boolean);
             product.isNew = Boolean(isNew);
+            if (sku !== undefined) product.sku = String(sku).trim();
+            if (trackInventory !== undefined) product.trackInventory = Boolean(trackInventory);
+            if (stock !== undefined) product.stock = Math.max(0, Number(stock) || 0);
+            if (lowStockThreshold !== undefined) product.lowStockThreshold = Math.max(0, Number(lowStockThreshold) || 0);
 
             const updatedProduct = await product.save();
 
@@ -155,6 +163,24 @@ export const getFeaturedProducts = async (req, res) => {
         } catch (error) {
             console.log("Error in updateProduct controller", error.message);
             return res.status(500).json({ message: "Server error", error: error.message });
+        }
+    };
+
+    export const updateInventory = async (req, res) => {
+        try {
+            const product = await Product.findById(req.params.id);
+            if (!product) return res.status(404).json({ message: "Product not found" });
+            const { stock, lowStockThreshold, trackInventory, sku } = req.body ?? {};
+            if (stock !== undefined && (!Number.isInteger(Number(stock)) || Number(stock) < 0)) return res.status(400).json({ message: "Stock must be a non-negative whole number" });
+            if (lowStockThreshold !== undefined && (!Number.isInteger(Number(lowStockThreshold)) || Number(lowStockThreshold) < 0)) return res.status(400).json({ message: "Low-stock threshold must be a non-negative whole number" });
+            if (stock !== undefined) product.stock = Number(stock);
+            if (lowStockThreshold !== undefined) product.lowStockThreshold = Number(lowStockThreshold);
+            if (trackInventory !== undefined) product.trackInventory = Boolean(trackInventory);
+            if (sku !== undefined) product.sku = String(sku).trim();
+            await product.save();
+            return res.json({ product });
+        } catch (error) {
+            return res.status(500).json({ message: "Unable to update inventory" });
         }
     };
 

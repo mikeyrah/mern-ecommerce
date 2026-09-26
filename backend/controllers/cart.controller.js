@@ -25,13 +25,18 @@ export const addToCart = async (req, res) => {
         const {productId} = req.body;
         const user = req.user;
 
-        if (!productId || !(await Product.exists({ _id: productId }))) {
+        const product = productId ? await Product.findById(productId) : null;
+        if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
 
         const existingItem = user.cartItems.find(
             (item) => item.product.toString() === productId
         );
+        const nextQuantity = existingItem ? existingItem.quantity + 1 : 1;
+        if (product.trackInventory && nextQuantity > product.stock) {
+            return res.status(409).json({ message: product.stock ? `Only ${product.stock} available` : "This product is out of stock" });
+        }
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
@@ -77,6 +82,11 @@ export const addToCart = async (req, res) => {
                 const existingItem = user.cartItems.find(
                     (item) => item.product.toString() === productId
                 );
+                const product = await Product.findById(productId);
+                if (!product) return res.status(404).json({ message: "Product not found" });
+                if (product.trackInventory && quantity > product.stock) {
+                    return res.status(409).json({ message: product.stock ? `Only ${product.stock} available` : "This product is out of stock" });
+                }
             
                 if (existingItem) {
                     if (quantity === 0) {

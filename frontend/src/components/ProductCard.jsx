@@ -9,7 +9,9 @@ import { Star } from 'lucide-react';
  const ProductCard = ({product}) => {
     const { user } = useUserStore();
     const { addToCart } = useCartStore();
+    const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
     const handleAddToCart = () => {
+        if (isOutOfStock) return;
         if(!user) {
             toast.error("Please login to add products to cart", { id: "login" });
             return;
@@ -21,6 +23,7 @@ import { Star } from 'lucide-react';
   return (
     <div className='flex w-full relative flex-col overflow-hidden rounded-2xl border border-[#e1dacb] bg-white shadow-[0_12px_28px_rgba(73,65,43,0.08)]'>
         <Link to={`/products/${product._id}`} className='relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl'>
+            {isOutOfStock && <span className="absolute right-3 top-3 z-10 rounded-full bg-[#7f4d45] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Sold out</span>}
             {(product.isNew || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && <span className="absolute left-3 top-3 z-10 rounded-full bg-[#314b3b] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">New</span>}
             <img className='object-cover w-full transition duration-500 hover:scale-105' src={product.images?.[0] || product.image} alt={product.name} />
             <div className='absolute inset-0 bg-black bg-opacity-20' />
@@ -38,11 +41,12 @@ import { Star } from 'lucide-react';
             <button
             className='flex items-center justify-center rounded-lg bg-[#6f856c] px-5 py-2.5 text-center text-sm
             font-medium
-            text-white hover:bg-[#586d55] focus:outline-none focus:ring-4 focus:ring-[#dce7d9]'
+            text-white hover:bg-[#586d55] focus:outline-none focus:ring-4 focus:ring-[#dce7d9] disabled:cursor-not-allowed disabled:bg-[#aaa9a2]'
             onClick={handleAddToCart}
+            disabled={isOutOfStock}
             >
                 <ShoppingCart size={22} className='mr-2' />
-                Add to cart
+                {isOutOfStock ? "Sold out" : "Add to cart"}
             </button>
         </div>
     </div>
