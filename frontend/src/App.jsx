@@ -16,6 +16,8 @@ import BotaniSeasonalPage from './pages/BotaniSeasonalPage';
 import BotaniHomeScentsPage from './pages/BotaniHomeScentsPage';
 import BotaniCollectionPage from './pages/BotaniCollectionPage';
 import ProductPage from './pages/ProductPage';
+import AccountPage from './pages/AccountPage';
+import OrdersPage from './pages/OrdersPage';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -66,6 +68,8 @@ function App() {
         <Route path='/brands/:brand' element={<BrandPage />} />
         <Route path='/products/:id' element={<ProductPage />} />
         <Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
+        <Route path='/account' element={user ? <AccountPage /> : <Navigate to='/login' />} />
+        <Route path='/orders' element={user ? <OrdersPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-cancel' element={<PurchaseCancelPage />} />
       </Routes>

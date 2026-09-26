@@ -81,6 +81,7 @@ const PurchaseSuccessPage = () => {
               Continue Shopping
               <ArrowRight className='ml-2' size={18} />
             </Link>
+            {orderId && <Link to='/orders' className='flex w-full items-center justify-center rounded-lg border border-emerald-600 px-4 py-2 font-bold text-emerald-400 transition hover:bg-gray-700'>View my orders</Link>}
           </div>
           </div>
         </div>

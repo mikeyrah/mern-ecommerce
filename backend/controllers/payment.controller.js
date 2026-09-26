@@ -1,6 +1,7 @@
 import Coupon from '../models/coupon.model.js';
 import Order from '../models/order.model.js'
 import User from '../models/user.model.js';
+import Product from '../models/product.model.js';
 import { stripe } from '../lib/stripe.js';
 
 
@@ -12,18 +13,30 @@ export const createCheckoutSession = async (req,res) => {
             return res.status(400).json({ error: "Invalid or empty products array" });
         }
 
-        let totalAmount = 0;
+        const requestedProducts = products.map((product) => ({
+            id: product._id,
+            quantity: Number(product.quantity),
+        }));
+        if (requestedProducts.some((product) => !product.id || !Number.isInteger(product.quantity) || product.quantity < 1 || product.quantity > 99)) {
+            return res.status(400).json({ message: "Invalid product quantity" });
+        }
 
-        const lineItems = products.map(product => {
-            const amount = Math.round(product.price * 100)
-            totalAmount += amount * product.quantity
+        const catalogProducts = await Product.find({ _id: { $in: requestedProducts.map((product) => product.id) } }).lean();
+        if (catalogProducts.length !== requestedProducts.length) return res.status(400).json({ message: "One or more products are unavailable" });
+        const catalog = new Map(catalogProducts.map((product) => [product._id.toString(), product]));
+        const verifiedProducts = requestedProducts.map((item) => ({ ...catalog.get(item.id), quantity: item.quantity }));
+
+        let totalAmount = 0;
+        const lineItems = verifiedProducts.map(product => {
+            const amount = Math.round(product.price * 100);
+            totalAmount += amount * product.quantity;
 
             return {
                 price_data:{
                     currency:"usd",
                     product_data: {
                         name:product.name,
-                        images:[product.image],
+                        images: product.image ? [product.image] : [],
                     },
                     unit_amount:amount
                 },
@@ -43,6 +56,7 @@ export const createCheckoutSession = async (req,res) => {
             payment_method_types:["card"],
             line_items: lineItems,
             mode:"payment",
+            shipping_address_collection: { allowed_countries: ["US"] },
             success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
             discounts: coupon
@@ -56,10 +70,12 @@ export const createCheckoutSession = async (req,res) => {
                 userId:req.user._id.toString(),
                 couponCode:couponCode || "",
                 products: JSON.stringify(
-                    products.map((p) => ({
-                        id: p._id,
+                    verifiedProducts.map((p) => ({
+                        id: p._id.toString(),
                         quantity: p.quantity,
                         price: p.price,
+                        name: p.name,
+                        image: p.image || "",
                     }))
                 ),
             },
@@ -111,10 +127,22 @@ export const checkoutSuccess = async(req,res) => {
             products: products.map(product => ({
                 product: product.id,
                 quantity: product.quantity,
-                price: product.price
+                price: product.price,
+                name: product.name,
+                image: product.image,
             })),
             totalAmount: session.amount_total / 100,
-            stripeSessionId: sessionId
+            stripeSessionId: sessionId,
+            customerEmail: session.customer_details?.email || "",
+            shippingAddress: session.shipping_details?.address ? {
+                name: session.shipping_details.name || "",
+                line1: session.shipping_details.address.line1 || "",
+                line2: session.shipping_details.address.line2 || "",
+                city: session.shipping_details.address.city || "",
+                state: session.shipping_details.address.state || "",
+                postalCode: session.shipping_details.address.postal_code || "",
+                country: session.shipping_details.address.country || "",
+            } : undefined,
         })
 
         await newOrder.save();

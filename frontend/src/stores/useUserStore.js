@@ -17,7 +17,7 @@ export const useUserStore = create((set, get) => ({
 
         try {
             const res = await axios.post("/auth/signup", {name,email,password});
-            set ({ user: res.data,loading: false });
+            set ({ user: res.data.user,loading: false });
         } catch (error) {
             set({ loading: false });
             toast.error(error.response.data.message || "An error occurred, please try again");
@@ -54,6 +54,32 @@ export const useUserStore = create((set, get) => ({
 
         } catch (error) {
             set({ checkingAuth: false, user: null });
+        }
+    },
+
+    updateProfilePicture: async (image) => {
+        set({ loading: true });
+        try {
+            const response = await axios.put("/auth/profile-picture", { image });
+            set({ user: response.data.user, loading: false });
+            toast.success("Profile picture updated");
+            return true;
+        } catch (error) {
+            set({ loading: false });
+            toast.error(error.response?.data?.message || "Unable to update profile picture");
+            return false;
+        }
+    },
+
+    removeProfilePicture: async () => {
+        set({ loading: true });
+        try {
+            const response = await axios.delete("/auth/profile-picture");
+            set({ user: response.data.user, loading: false });
+            toast.success("Profile picture removed");
+        } catch (error) {
+            set({ loading: false });
+            toast.error(error.response?.data?.message || "Unable to remove profile picture");
         }
     },
 

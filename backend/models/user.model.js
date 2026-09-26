@@ -34,6 +34,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["customer", "admin"],
         default: "customer"
+    },
+    profilePicture: {
+        url: {
+            type: String,
+            default: ""
+        },
+        publicId: {
+            type: String,
+            default: ""
+        }
     }
     // createdAt, updatedAt
 }, {

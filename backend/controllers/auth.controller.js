@@ -1,6 +1,15 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { redis } from "../lib/redis.js";
+import cloudinary from "../lib/cloudinary.js";
+
+const publicUser = (user) => ({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    profilePicture: user.profilePicture || { url: "", publicId: "" },
+});
 
 const generateTokens = (userId) => {
     const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" })
@@ -56,12 +65,7 @@ export const signup = async (req, res) => {
        setCookie(res, accessToken, refreshToken);
 
         res.status(201).json({
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
+            user: publicUser(user)
         });
     } catch (error) {
         console.log("Error in signup controller", error.message);
@@ -80,10 +84,7 @@ export const login = async (req, res) => {
             setCookie(res, accessToken, refreshToken);
 
             res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+                ...publicUser(user),
                 message: "Logged in successfully"
             });
         } else {
@@ -150,5 +151,59 @@ export const getProfile = async (req, res) => {
     } catch (error) {
         console.log("Error in getProfile controller", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+export const updateProfilePicture = async (req, res) => {
+    try {
+        const image = req.body?.image;
+        if (typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,/i.test(image)) {
+            return res.status(400).json({ message: "Please upload a JPEG, PNG, or WebP image" });
+        }
+
+        const base64 = image.split(",")[1] || "";
+        const estimatedBytes = Math.ceil(base64.length * 0.75);
+        if (estimatedBytes > 5 * 1024 * 1024) {
+            return res.status(400).json({ message: "Profile picture must be 5 MB or smaller" });
+        }
+
+        const upload = await cloudinary.uploader.upload(image, {
+            folder: "profile-pictures",
+            transformation: [{ width: 600, height: 600, crop: "fill", gravity: "face", quality: "auto", fetch_format: "auto" }],
+        });
+
+        const previousPublicId = req.user.profilePicture?.publicId;
+        req.user.profilePicture = { url: upload.secure_url, publicId: upload.public_id };
+        await req.user.save();
+
+        if (previousPublicId) {
+            cloudinary.uploader.destroy(previousPublicId).catch((error) => {
+                console.log("Error deleting previous profile picture", error.message);
+            });
+        }
+
+        return res.json({ user: publicUser(req.user) });
+    } catch (error) {
+        console.log("Error updating profile picture", error.message);
+        return res.status(500).json({ message: "Unable to update profile picture" });
+    }
+};
+
+export const removeProfilePicture = async (req, res) => {
+    try {
+        const publicId = req.user.profilePicture?.publicId;
+        req.user.profilePicture = { url: "", publicId: "" };
+        await req.user.save();
+
+        if (publicId) {
+            cloudinary.uploader.destroy(publicId).catch((error) => {
+                console.log("Error deleting profile picture", error.message);
+            });
+        }
+
+        return res.json({ user: publicUser(req.user) });
+    } catch (error) {
+        console.log("Error removing profile picture", error.message);
+        return res.status(500).json({ message: "Unable to remove profile picture" });
     }
 };
