@@ -174,7 +174,18 @@ const recordPaidOrder = async (session) => {
             } : undefined,
         })
 
-        await newOrder.save();
+        try {
+            await newOrder.save();
+        } catch (error) {
+            // Stripe's webhook and the browser success callback can arrive at
+            // the same time. The unique session ID lets one create the order;
+            // the other should return that order instead of showing an error.
+            if (error?.code === 11000) {
+                const concurrentOrder = await Order.findOne({ stripeSessionId: session.id });
+                if (concurrentOrder) return concurrentOrder;
+            }
+            throw error;
+        }
         await Promise.all(products.map((product) => Product.updateOne(
             { _id: product.id, trackInventory: true },
             [
