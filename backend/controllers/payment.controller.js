@@ -190,7 +190,8 @@ const recordPaidOrder = async (session) => {
             { _id: product.id, trackInventory: true },
             [
                 { $set: { stock: { $max: [0, { $subtract: ["$stock", product.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, product.quantity] } } },
-            ]
+            ],
+            { updatePipeline: true }
         )));
         await User.findByIdAndUpdate(session.metadata.userId, { cartItems: [] });
 

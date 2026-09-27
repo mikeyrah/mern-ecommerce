@@ -55,13 +55,15 @@ export const updateOrder = async (req, res) => {
             if (fulfillmentStatus === "cancelled" && !order.inventoryRestocked) {
                 await Promise.all(order.products.map((item) => Product.updateOne(
                     { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }]
+                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }],
+                    { updatePipeline: true }
                 )));
                 order.inventoryRestocked = true;
             } else if (order.fulfillmentStatus === "cancelled" && order.inventoryRestocked) {
                 await Promise.all(order.products.map((item) => Product.updateOne(
                     { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $max: [0, { $subtract: ["$stock", item.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }]
+                    [{ $set: { stock: { $max: [0, { $subtract: ["$stock", item.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }],
+                    { updatePipeline: true }
                 )));
                 order.inventoryRestocked = false;
             }
@@ -135,7 +137,8 @@ export const reviewReturn = async (req, res) => {
             if (!order.inventoryRestocked) {
                 await Promise.all(order.products.map((item) => Product.updateOne(
                     { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }]
+                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }],
+                    { updatePipeline: true }
                 )));
                 order.inventoryRestocked = true;
             }
