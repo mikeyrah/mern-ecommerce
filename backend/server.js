@@ -14,6 +14,7 @@ import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import orderRoutes from "./routes/order.route.js";
+import blogRoutes from "./routes/blog.route.js";
 import { stripeWebhook } from "./controllers/payment.controller.js";
 
 import { connectDB } from "./lib/db.js";
@@ -39,6 +40,7 @@ app.use(helmet({
 // route must remain before the global JSON parser.
 app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 app.use("/api/auth/profile-picture", express.json({ limit: "8mb" }));
+app.use("/api/blog/admin", express.json({ limit: "8mb" }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -83,6 +85,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/blog", blogRoutes);
 
 app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });

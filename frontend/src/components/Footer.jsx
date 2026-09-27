@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-const links = [["Contact", "/contact"], ["Shipping & pickup", "/shipping"], ["Returns & refunds", "/returns"], ["Privacy", "/privacy"], ["Terms", "/terms"]];
+const links = [["Journal", "/journal"], ["Contact", "/contact"], ["Shipping & pickup", "/shipping"], ["Returns & refunds", "/returns"], ["Privacy", "/privacy"], ["Terms", "/terms"]];
 
 const Footer = () => <footer className="border-t border-[#ded8ca] bg-[#27352b] px-6 py-12 text-[#e7eee3]">
   <div className="mx-auto grid max-w-6xl gap-9 md:grid-cols-[1fr_auto] md:items-end">

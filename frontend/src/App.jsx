@@ -20,6 +20,8 @@ import AccountPage from './pages/AccountPage';
 import OrdersPage from './pages/OrdersPage';
 import InfoPage from './pages/InfoPage';
 import Footer from './components/Footer';
+import BlogPage from './pages/BlogPage';
+import BlogArticlePage from './pages/BlogArticlePage';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -74,6 +76,8 @@ function App() {
         <Route path='/orders' element={user ? <OrdersPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-cancel' element={<PurchaseCancelPage />} />
+        <Route path='/journal' element={<BlogPage />} />
+        <Route path='/journal/:slug' element={<BlogArticlePage />} />
         {['contact', 'shipping', 'returns', 'privacy', 'terms'].map((page) => <Route key={page} path={`/${page}`} element={<InfoPage />} />)}
       </Routes>
       <Footer />

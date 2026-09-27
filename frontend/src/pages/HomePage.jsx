@@ -1,10 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import FeaturedProducts from "../components/FeaturedProducts";
 import { useProductStore } from "../stores/useProductStore";
 import { brands } from "../data/brands";
 import CategoryItem from "../components/CategoryItem";
+import { blogPosts } from "../data/blogPosts";
+import axios from "../lib/axios";
 
 const categories = [
   { href: "/jeans", name: "Jeans", imageUrl: "/jeans.jpg" },
@@ -17,9 +19,11 @@ const categories = [
 
 const HomePage = () => {
   const { fetchFeaturedProducts, products, loading } = useProductStore();
+  const [journalPosts, setJournalPosts] = useState(blogPosts);
 
   useEffect(() => {
     fetchFeaturedProducts();
+    axios.get("/blog").then(({ data }) => { if (data.posts?.length) setJournalPosts(data.posts.slice(0, 3)); }).catch(() => {});
   }, [fetchFeaturedProducts]);
 
   return (
@@ -71,6 +75,10 @@ const HomePage = () => {
       </section>
 
       {!loading && products.length > 0 && <FeaturedProducts featuredProducts={products} />}
+
+      <section className="border-t border-[#e4ddcd] bg-[#f3eee2]/70 px-4 py-16 sm:px-8">
+        <div className="mx-auto max-w-7xl"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="section-kicker text-[#7C9279]">The Stewart-Tate journal</p><h2 className="mt-2 font-serif text-4xl text-[#27352b]">Stories for thoughtful living.</h2></div><Link to="/journal" className="inline-flex items-center gap-2 text-sm font-semibold text-[#58715d]">Visit the journal <ArrowRight size={16} /></Link></div><div className="mt-8 grid gap-5 md:grid-cols-3">{journalPosts.map((post) => <Link key={post.slug} to={`/journal/${post.slug}`} className="group rounded-[1.5rem] border border-[#ded8ca] bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: post.accent }}>{post.category}</p><h3 className="mt-5 font-serif text-2xl leading-tight">{post.title}</h3><p className="mt-3 text-sm leading-6 text-[#687168]">{post.excerpt}</p><span className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#58715d]">Read story <ArrowRight size={14} className="transition group-hover:translate-x-1" /></span></Link>)}</div></div>
+      </section>
     </main>
   );
 };

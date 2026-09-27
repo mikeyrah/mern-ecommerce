@@ -6,7 +6,6 @@ import {
   Clock3,
   Flower2,
   Leaf,
-  Search,
   ShoppingBag,
   Sparkles,
   Star,
@@ -75,18 +74,17 @@ const BotaniSeasonalPage = () => {
       </p>
 
       <header className="border-b border-[#ded2c1] bg-[#fbf7ef]/95">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-          <Link to="/brands/botani-eve" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#5b665c]">
+        <div className="mx-auto grid max-w-7xl grid-cols-[3.5rem_1fr_3.5rem] items-center px-4 py-4 sm:grid-cols-[6rem_1fr_6rem] sm:px-8 sm:py-5">
+          <Link to="/brands/botani-eve" className="inline-flex items-center gap-2 justify-self-start text-xs font-bold uppercase tracking-[0.14em] text-[#5b665c]">
             <ArrowLeft size={17} /> <span className="hidden sm:inline">Botani Eve</span>
           </Link>
-          <Link to="/brands/botani-eve" className="text-center">
-            <span className="block font-serif text-3xl font-semibold tracking-[0.08em] text-[#294233] sm:text-4xl">BOTANI EVE</span>
+          <Link to="/brands/botani-eve" className="justify-self-center whitespace-nowrap text-center">
+            <span className="block font-serif text-2xl font-semibold tracking-[0.08em] text-[#294233] sm:text-4xl">BOTANI EVE</span>
             <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.36em] text-[#718074]">Rooted in ritual</span>
           </Link>
-          <div className="flex items-center gap-4 text-[#314b3b]">
-            <Search size={19} />
-            <UserRound className="hidden sm:block" size={19} />
-            <ShoppingBag size={19} />
+          <div className="flex items-center justify-self-end gap-3 text-[#314b3b]">
+            <Link to="/account" aria-label="Account"><UserRound className="hidden sm:block" size={19} /></Link>
+            <Link to="/cart" aria-label="Shopping bag"><ShoppingBag size={19} /></Link>
           </div>
         </div>
         <nav className="botani-nav mx-auto flex max-w-5xl items-center justify-start gap-7 overflow-x-auto px-5 pb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#667469] sm:justify-center" aria-label="Botani Eve collections">
@@ -102,8 +100,8 @@ const BotaniSeasonalPage = () => {
 
       <section className="relative isolate overflow-hidden bg-[#d9b792]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(255,245,218,0.7),transparent_28%),linear-gradient(115deg,rgba(120,63,47,0.08),transparent_55%)]" />
-        <div className="relative mx-auto grid min-h-[620px] max-w-7xl md:grid-cols-[0.95fr_1.05fr]">
-          <div className="z-10 flex items-center px-7 py-20 sm:px-12 lg:px-20">
+        <div className="relative mx-auto grid max-w-7xl md:min-h-[620px] md:grid-cols-[0.95fr_1.05fr]">
+          <div className="z-10 flex items-center px-6 py-14 sm:px-12 sm:py-20 lg:px-20">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[#81503e]/25 bg-[#f8e9d3]/55 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#754837]">
                 <Sparkles size={14} /> Autumn 2026
@@ -123,7 +121,7 @@ const BotaniSeasonalPage = () => {
             </div>
           </div>
 
-          <div className="seasonal-still-life relative min-h-[440px] overflow-hidden md:min-h-full" aria-label="Botani Eve autumn bath and body collection">
+          <div className="seasonal-still-life relative min-h-[360px] overflow-hidden sm:min-h-[440px] md:min-h-full" aria-label="Botani Eve autumn bath and body collection">
             <div className="absolute left-[8%] top-[10%] h-64 w-64 rounded-full bg-[#f5dfad]/70 blur-sm" />
             <Leaf className="absolute -right-5 top-[2%] h-52 w-52 rotate-[38deg] text-[#7d8d62]/70" strokeWidth={0.65} />
             <Leaf className="absolute bottom-[2%] left-[4%] h-44 w-44 -rotate-[50deg] text-[#9c673f]/55" strokeWidth={0.7} />
@@ -161,10 +159,10 @@ const BotaniSeasonalPage = () => {
 
         <div className="mt-11 grid gap-5 lg:grid-cols-3">
           {seasonalCollections.map(({ slug, label, eyebrow, description, icon: Icon, tone, ink }) => (
-            <button type="button" key={slug} onClick={() => chooseCollection(slug)} className={`${tone} group relative min-h-[390px] overflow-hidden rounded-[1.75rem] p-8 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(86,57,40,0.16)]`}>
+            <button type="button" key={slug} onClick={() => chooseCollection(slug)} className={`${tone} group relative flex min-h-[340px] flex-col overflow-hidden rounded-[1.75rem] p-7 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(86,57,40,0.16)] sm:min-h-[370px] sm:p-8`}>
               <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full border border-white/35" />
               <Icon className={`relative h-11 w-11 ${ink}`} strokeWidth={1.1} />
-              <div className="absolute bottom-8 left-8 right-8">
+              <div className="relative mt-auto pt-16">
                 <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${ink}`}>{eyebrow}</p>
                 <h3 className="mt-3 font-serif text-3xl leading-tight text-[#342f29]">{label}</h3>
                 <p className="mt-3 text-sm leading-6 text-[#594d44]">{description}</p>

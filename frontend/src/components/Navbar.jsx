@@ -23,6 +23,7 @@ const Navbar = () => {
         <Link to={"/"} className='hidden text-[#596259] hover:text-[#B58A34] transition duration-300 ease-in-out sm:inline'>
         Home
         </Link>
+        <Link to="/journal" className='hidden text-[#596259] hover:text-[#B58A34] transition duration-300 ease-in-out md:inline'>Journal</Link>
         { user && (
             <Link
              to={"/cart"}
