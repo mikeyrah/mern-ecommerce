@@ -44,8 +44,8 @@ const SignUpPage = () => {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <FormField id="name" label="Full name" icon={User} value={formData.name} onChange={updateField("name")} placeholder="Your name" />
             <FormField id="email" label="Email address" icon={Mail} type="email" value={formData.email} onChange={updateField("email")} placeholder="you@example.com" />
-            <FormField id="password" label="Password" icon={Lock} type="password" value={formData.password} onChange={updateField("password")} placeholder="••••••••" />
-            <FormField id="confirmPassword" label="Confirm password" icon={Lock} type="password" value={formData.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" />
+            <FormField id="password" label="Password" icon={Lock} type="password" minLength={8} value={formData.password} onChange={updateField("password")} placeholder="At least 8 characters" />
+            <FormField id="confirmPassword" label="Confirm password" icon={Lock} type="password" minLength={8} value={formData.confirmPassword} onChange={updateField("confirmPassword")} placeholder="Repeat your password" />
 
             <button type="submit" disabled={loading} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f856c] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#586d55] focus:outline-none focus:ring-4 focus:ring-[#dce7d9] disabled:opacity-50">
               {loading ? <><Loader className="animate-spin" size={18} /> Creating account…</> : <><UserPlus size={18} /> Create account <ArrowRight size={17} /></>}
@@ -59,12 +59,12 @@ const SignUpPage = () => {
   );
 };
 
-const FormField = ({ id, label, icon: Icon, type = "text", value, onChange, placeholder }) => (
+const FormField = ({ id, label, icon: Icon, type = "text", minLength, value, onChange, placeholder }) => (
   <label className="block text-sm font-semibold text-[#43503f]" htmlFor={id}>
     {label}
     <span className="relative mt-2 block">
       <Icon className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C9279]" size={18} />
-      <input id={id} type={type} required value={value} onChange={onChange} placeholder={placeholder} className="w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] py-3 pl-11 pr-4 text-[#27352b] outline-none transition placeholder:text-[#9a9c91] focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" />
+      <input id={id} type={type} minLength={minLength} required value={value} onChange={onChange} placeholder={placeholder} className="w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] py-3 pl-11 pr-4 text-[#27352b] outline-none transition placeholder:text-[#9a9c91] focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" />
     </span>
   </label>
 );

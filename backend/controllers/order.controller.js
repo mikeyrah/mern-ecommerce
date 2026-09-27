@@ -3,7 +3,7 @@ import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 import { stripe } from "../lib/stripe.js";
-import { sendOrderStatusUpdate, sendReturnStatusUpdate } from "../lib/email.js";
+import { sendOrderStatusUpdate, sendReturnRequestNotification, sendReturnStatusUpdate } from "../lib/email.js";
 
 const statuses = new Set(["placed", "processing", "shipped", "delivered", "cancelled"]);
 
@@ -97,6 +97,8 @@ export const requestReturn = async (req, res) => {
         if (!reason) return res.status(400).json({ message: "Please select a return reason" });
         order.returnRequest = { status: "requested", reason, customerNote, requestedAt: new Date() };
         await order.save();
+        sendReturnRequestNotification(order, { name: req.user.name })
+            .catch((emailError) => console.error("Return request email failed:", emailError.message));
         const updated = await populatedOrder(Order.findById(order._id));
         res.status(201).json({ order: updated, message: "Return request submitted" });
     } catch (error) {

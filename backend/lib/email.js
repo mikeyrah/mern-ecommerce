@@ -78,4 +78,10 @@ export const sendReturnStatusUpdate = (order, recipient) => {
         html: layout("Returns & refunds", title, `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(recipient.name || "there")}, ${message}</p>${note}`),
     });
 };
+
+export const sendReturnRequestNotification = (order, customer) => sendEmail({
+    to: process.env.ORDER_NOTIFICATION_EMAIL || "stewarttateandco@gmail.com",
+    subject: `Return requested: ${order.orderNumber}`,
+    html: layout("Return request", "A customer requested a return.", `<p style="line-height:1.7;color:#596259"><strong>${escapeHtml(customer.name || "Customer")}</strong> requested a return for order <strong>${escapeHtml(order.orderNumber)}</strong>.</p><p style="padding:16px;background:#edf3e9;border-radius:12px;line-height:1.6"><strong>Reason</strong><br>${escapeHtml(order.returnRequest?.reason || "Not provided")}${order.returnRequest?.customerNote ? `<br><br>${escapeHtml(order.returnRequest.customerNote)}` : ""}</p>${storeUrl() ? `<p style="margin-top:24px"><a href="${storeUrl()}/secret-dashboard" style="display:inline-block;background:#314b3b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px">Review return</a></p>` : ""}`),
+});
 import nodemailer from "nodemailer";

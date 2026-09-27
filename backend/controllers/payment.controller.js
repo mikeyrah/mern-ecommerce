@@ -13,6 +13,7 @@ export const createCheckoutSession = async (req,res) => {
         if (!Array.isArray(products) || products.length === 0) {
             return res.status(400).json({ error: "Invalid or empty products array" });
         }
+        if (products.length > 15) return res.status(400).json({ message: "Checkout supports up to 15 different products per order" });
         if (!["shipping", "pickup"].includes(deliveryMethod)) return res.status(400).json({ message: "Invalid delivery method" });
 
         const requestedProducts = products.map((product) => ({
@@ -95,15 +96,7 @@ export const createCheckoutSession = async (req,res) => {
                 couponCode:couponCode || "",
                 deliveryMethod,
                 shippingAmount: String(shippingAmount),
-                products: JSON.stringify(
-                    verifiedProducts.map((p) => ({
-                        id: p._id.toString(),
-                        quantity: p.quantity,
-                        price: p.price,
-                        name: p.name,
-                        image: p.image || "",
-                    }))
-                ),
+                products: verifiedProducts.map((p) => `${p._id}:${p.quantity}`).join(","),
             },
         });
         if(totalAmount >= 20000) {
@@ -120,25 +113,12 @@ export const createCheckoutSession = async (req,res) => {
     }
 };
 
-export const checkoutSuccess = async(req,res) => {
-    try {
-      const {sessionId} = req.body;
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-      if (session.payment_status !== "paid") {
-        return res.status(400).json({ message: "Payment has not completed" });
-      }
-
-      const existingOrder = await Order.findOne({ stripeSessionId: sessionId });
+const recordPaidOrder = async (session) => {
+      if (session.payment_status !== "paid") throw new Error("Payment has not completed");
+      const existingOrder = await Order.findOne({ stripeSessionId: session.id });
       if (existingOrder) {
         await User.findByIdAndUpdate(existingOrder.user, { cartItems: [] });
-        return res.status(200).json({
-          success: true,
-          message: "Payment was already recorded.",
-          orderId: existingOrder._id,
-          deliveryMethod: existingOrder.deliveryMethod,
-          pickupLocation: existingOrder.pickupLocation,
-        });
+        return existingOrder;
       }
       
         if(session.metadata.couponCode) {
@@ -149,7 +129,22 @@ export const checkoutSuccess = async(req,res) => {
             })
         }
 
-        const products = JSON.parse(session.metadata.products);
+        let products;
+        if (session.metadata.products.trim().startsWith("[")) {
+            products = JSON.parse(session.metadata.products);
+        } else {
+            const references = session.metadata.products.split(",").map((entry) => {
+                const [id, quantity] = entry.split(":");
+                return { id, quantity: Number(quantity) };
+            });
+            const catalogProducts = await Product.find({ _id: { $in: references.map((item) => item.id) } }).lean();
+            const catalog = new Map(catalogProducts.map((product) => [product._id.toString(), product]));
+            products = references.map((item) => {
+                const product = catalog.get(item.id);
+                if (!product) throw new Error("A purchased product could not be located");
+                return { id: item.id, quantity: item.quantity, price: product.price, name: product.name, image: product.images?.[0] || product.image || "" };
+            });
+        }
         const newOrder = new Order({
             user:session.metadata.userId,
             products: products.map(product => ({
@@ -160,7 +155,7 @@ export const checkoutSuccess = async(req,res) => {
                 image: product.image,
             })),
             totalAmount: session.amount_total / 100,
-            stripeSessionId: sessionId,
+            stripeSessionId: session.id,
             stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || "",
             deliveryMethod: session.metadata.deliveryMethod || "shipping",
             shippingAmount: Number(session.metadata.shippingAmount || 0) / 100,
@@ -205,16 +200,41 @@ export const checkoutSuccess = async(req,res) => {
             console.error("Order email failed:", result.reason?.message || result.reason);
         });
 
+        return newOrder;
+};
+
+export const checkoutSuccess = async(req,res) => {
+    try {
+        const { sessionId } = req.body ?? {};
+        if (!sessionId) return res.status(400).json({ message: "Checkout session is required" });
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session.metadata?.userId !== req.user._id.toString()) return res.status(403).json({ message: "This checkout does not belong to your account" });
+        const order = await recordPaidOrder(session);
         res.status(200).json({
             success: true,
-            message: "Payment successful, order created, and coupon deactivated if used.",
-            orderId: newOrder._id,
-            deliveryMethod: newOrder.deliveryMethod,
-            pickupLocation: newOrder.pickupLocation,
+            message: "Payment successful and order recorded.",
+            orderId: order._id,
+            deliveryMethod: order.deliveryMethod,
+            pickupLocation: order.pickupLocation,
         });
     } catch (error) {
         console.error("Error processing successful checkout:", error);
         res.status(500).json({ message:"Error processing successful checkout", error: error.message });
+    }
+};
+
+export const stripeWebhook = async (req, res) => {
+    const signature = req.headers["stripe-signature"];
+    if (!process.env.STRIPE_WEBHOOK_SECRET) return res.status(503).send("Stripe webhook is not configured");
+    try {
+        const event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+        if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+            await recordPaidOrder(event.data.object);
+        }
+        res.json({ received: true });
+    } catch (error) {
+        console.error("Stripe webhook failed:", error.message);
+        res.status(400).send(`Webhook error: ${error.message}`);
     }
 };
 

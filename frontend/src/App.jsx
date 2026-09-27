@@ -18,6 +18,8 @@ import BotaniCollectionPage from './pages/BotaniCollectionPage';
 import ProductPage from './pages/ProductPage';
 import AccountPage from './pages/AccountPage';
 import OrdersPage from './pages/OrdersPage';
+import InfoPage from './pages/InfoPage';
+import Footer from './components/Footer';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -72,7 +74,9 @@ function App() {
         <Route path='/orders' element={user ? <OrdersPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
         <Route path='/purchase-cancel' element={<PurchaseCancelPage />} />
+        {['contact', 'shipping', 'returns', 'privacy', 'terms'].map((page) => <Route key={page} path={`/${page}`} element={<InfoPage />} />)}
       </Routes>
+      <Footer />
       </div>
       <Toaster />
     </div>

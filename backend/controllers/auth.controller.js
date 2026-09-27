@@ -43,13 +43,18 @@ const setCookie = (res, accessToken, refreshToken) => {
 
 export const signup = async (req, res) => {
     try {
-        const { email, password, name } = req.body ?? {};
+        const name = String(req.body?.name || "").trim();
+        const email = String(req.body?.email || "").trim().toLowerCase();
+        const password = String(req.body?.password || "");
 
         if (!name || !email || !password) {
             return res.status(400).json({
                 message: "Name, email, and password are required",
             });
         }
+        if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address" });
+        if (password.length < 8) return res.status(400).json({ message: "Password must be at least 8 characters" });
+        if (name.length > 100) return res.status(400).json({ message: "Name must be 100 characters or fewer" });
 
         const userExists = await User.findOne({ email });
 
@@ -74,7 +79,9 @@ export const signup = async (req, res) => {
 };
 export const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = String(req.body?.email || "").trim().toLowerCase();
+        const password = String(req.body?.password || "");
+        if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
         const user = await User.findOne({ email });
 
         if (user && (await user.comparePassword(password))) {
@@ -141,7 +148,7 @@ export const refreshToken = async (req, res) => {
         res.json({ accessToken });
     } catch (error) {
         console.log("Error in refreshToken controller", error.message);
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(401).json({ message: "Your session has expired. Please sign in again." });
     }
 };
 

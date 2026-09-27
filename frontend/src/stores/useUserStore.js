@@ -20,7 +20,7 @@ export const useUserStore = create((set, get) => ({
             set ({ user: res.data.user,loading: false });
         } catch (error) {
             set({ loading: false });
-            toast.error(error.response.data.message || "An error occurred, please try again");
+            toast.error(error.response?.data?.message || "An error occurred, please try again");
         }
     },
 
@@ -33,7 +33,7 @@ export const useUserStore = create((set, get) => ({
             set ({ user: res.data, loading: false });
         } catch (error) {
             set({ loading: false });
-            toast.error(error.response.data.message || "An error occurred");
+            toast.error(error.response?.data?.message || "An error occurred");
         }
     },
 
@@ -92,7 +92,7 @@ export const useUserStore = create((set, get) => ({
             set({ checkingAuth: false });
             return response.data;
         } catch (error) {
-            set({ user: null, checkAuth: false });
+            set({ user: null, checkingAuth: false });
             throw error;
         }
     },
@@ -105,7 +105,9 @@ axios.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response && error.response.status === 401 && !originalRequest._retry) {
+        const isRefreshRequest = originalRequest?.url?.includes("/auth/refresh-token");
+        const isLogoutRequest = originalRequest?.url?.includes("/auth/logout");
+        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest && !isLogoutRequest) {
             originalRequest._retry = true;
 
             try {
@@ -118,6 +120,7 @@ axios.interceptors.response.use(
                 refreshPromise = null;
                 return axios(originalRequest);
             } catch (refreshError) {
+                refreshPromise = null;
                 useUserStore.getState().logout();
                 return Promise.reject(refreshError);
             }
