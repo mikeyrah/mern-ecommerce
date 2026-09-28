@@ -14,6 +14,7 @@ import BrandPage from './pages/BrandPage';
 import BotaniBathBodyPage from './pages/BotaniBathBodyPage';
 import BotaniSeasonalPage from './pages/BotaniSeasonalPage';
 import BotaniHomeScentsPage from './pages/BotaniHomeScentsPage';
+import BotaniMenPage from './pages/BotaniMenPage';
 import BotaniCollectionPage from './pages/BotaniCollectionPage';
 import ProductPage from './pages/ProductPage';
 import AccountPage from './pages/AccountPage';
@@ -68,6 +69,7 @@ function App() {
         <Route path='/brands/botani-eve/bath-body' element={<BotaniBathBodyPage />} />
         <Route path='/brands/botani-eve/seasonal' element={<BotaniSeasonalPage />} />
         <Route path='/brands/botani-eve/home-scents' element={<BotaniHomeScentsPage />} />
+        <Route path='/brands/botani-eve/men' element={<BotaniMenPage />} />
         <Route path='/brands/botani-eve/:collection' element={<BotaniCollectionPage />} />
         <Route path='/brands/:brand' element={<BrandPage />} />
         <Route path='/products/:id' element={<ProductPage />} />
