@@ -48,6 +48,9 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 25, standardHea
 const checkoutLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 30, standardHeaders: "draft-8", legacyHeaders: false });
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/signup", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/auth/reset-password", authLimiter);
+app.use("/api/auth/verify-email", authLimiter);
 app.use("/api/payments/create-checkout-session", checkoutLimiter);
 
 // The frontend sends authentication cookies with requests. When it runs on a

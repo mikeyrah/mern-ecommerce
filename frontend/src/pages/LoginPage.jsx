@@ -53,7 +53,7 @@ const LoginPage = () => {
             </label>
 
             <label className="block text-sm font-semibold text-[#43503f]" htmlFor="password">
-              Password
+              <span className="flex items-center justify-between">Password <Link to="/forgot-password" className="text-xs text-[#9b7528] hover:text-[#76571d]">Forgot password?</Link></span>
               <span className="relative mt-2 block">
                 <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C9279]" size={18} />
                 <input id="password" type="password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" className="w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] py-3 pl-11 pr-4 text-[#27352b] outline-none transition placeholder:text-[#9a9c91] focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" />

@@ -1,9 +1,11 @@
+import nodemailer from "nodemailer";
+
 const escapeHtml = (value = "") => String(value)
     .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
-const storeUrl = () => (process.env.CLIENT_URL || "").replace(/\/$/, "");
+const storeUrl = () => (process.env.CLIENT_URL || "").split(",")[0].trim().replace(/\/$/, "");
 
 const layout = (eyebrow, title, content) => `<!doctype html><html><body style="margin:0;background:#f8f6ef;color:#27352b;font-family:Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #ded8ca;border-radius:24px;overflow:hidden"><tr><td style="background:#314b3b;padding:28px 36px;color:#fff"><div style="font-family:Georgia,serif;font-size:27px">Stewart-Tate &amp; Co.</div><div style="margin-top:6px;font-size:10px;letter-spacing:2px;color:#dce7d9">${escapeHtml(eyebrow).toUpperCase()}</div></td></tr><tr><td style="padding:34px 36px"><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:34px;line-height:1.15;color:#27352b">${escapeHtml(title)}</h1>${content}</td></tr><tr><td style="background:#f3eee2;padding:22px 36px;font-size:12px;line-height:1.6;color:#687064">Stewart-Tate &amp; Co.<br>970 N Oak St, Jackson, GA 30233</td></tr></table></td></tr></table></body></html>`;
 
@@ -28,6 +30,26 @@ export const sendEmail = async ({ to, subject, html }) => {
         to,
         subject,
         html,
+    });
+};
+
+const actionButton = (href, label) => `<p style="margin-top:26px"><a href="${escapeHtml(href)}" style="display:inline-block;background:#314b3b;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:bold">${escapeHtml(label)}</a></p>`;
+
+export const sendEmailVerification = (user, token) => {
+    const url = `${storeUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+    return sendEmail({
+        to: user.email,
+        subject: "Verify your Stewart-Tate & Co. email",
+        html: layout("Account security", "Confirm your email address.", `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(user.name || "there")}, use the button below to verify your email address. This link expires in 24 hours.</p>${actionButton(url, "Verify my email")}<p style="margin-top:24px;font-size:13px;line-height:1.6;color:#7a817a">If you did not create this account, you can safely ignore this email.</p>`),
+    });
+};
+
+export const sendPasswordReset = (user, token) => {
+    const url = `${storeUrl()}/reset-password?token=${encodeURIComponent(token)}`;
+    return sendEmail({
+        to: user.email,
+        subject: "Reset your Stewart-Tate & Co. password",
+        html: layout("Account security", "Reset your password.", `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(user.name || "there")}, we received a request to reset your password. This secure link expires in one hour.</p>${actionButton(url, "Choose a new password")}<p style="margin-top:24px;font-size:13px;line-height:1.6;color:#7a817a">If you did not request a reset, no changes have been made to your account.</p>`),
     });
 };
 
@@ -84,4 +106,3 @@ export const sendReturnRequestNotification = (order, customer) => sendEmail({
     subject: `Return requested: ${order.orderNumber}`,
     html: layout("Return request", "A customer requested a return.", `<p style="line-height:1.7;color:#596259"><strong>${escapeHtml(customer.name || "Customer")}</strong> requested a return for order <strong>${escapeHtml(order.orderNumber)}</strong>.</p><p style="padding:16px;background:#edf3e9;border-radius:12px;line-height:1.6"><strong>Reason</strong><br>${escapeHtml(order.returnRequest?.reason || "Not provided")}${order.returnRequest?.customerNote ? `<br><br>${escapeHtml(order.returnRequest.customerNote)}` : ""}</p>${storeUrl() ? `<p style="margin-top:24px"><a href="${storeUrl()}/secret-dashboard" style="display:inline-block;background:#314b3b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px">Review return</a></p>` : ""}`),
 });
-import nodemailer from "nodemailer";

@@ -1,15 +1,18 @@
 import { useRef, useState } from "react";
-import { Camera, Check, ImagePlus, Loader, Mail, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, ImagePlus, KeyRound, Loader, Mail, MailCheck, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useUserStore } from "../stores/useUserStore";
+import axios from "../lib/axios";
 
 const AccountPage = () => {
   const { user, loading, updateProfilePicture, removeProfilePicture } = useUserStore();
   const fileInput = useRef(null);
   const [preview, setPreview] = useState("");
   const [pendingImage, setPendingImage] = useState("");
+  const [securityLoading, setSecurityLoading] = useState(false);
+  const [passwords, setPasswords] = useState({ currentPassword: "", password: "", confirmPassword: "" });
   const initials = user.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
   const currentImage = preview || user.profilePicture?.url;
 
@@ -33,6 +36,27 @@ const AccountPage = () => {
   };
 
   const removeImage = async () => { await removeProfilePicture(); clearSelection(); };
+
+  const resendVerification = async () => {
+    setSecurityLoading(true);
+    try {
+      const response = await axios.post("/auth/verify-email/request");
+      toast.success(response.data.message);
+    } catch (error) { toast.error(error.response?.data?.message || "Unable to send verification email"); }
+    finally { setSecurityLoading(false); }
+  };
+
+  const changePassword = async (event) => {
+    event.preventDefault();
+    if (passwords.password !== passwords.confirmPassword) return toast.error("New passwords do not match");
+    setSecurityLoading(true);
+    try {
+      const response = await axios.post("/auth/change-password", { currentPassword: passwords.currentPassword, password: passwords.password });
+      toast.success(response.data.message);
+      setPasswords({ currentPassword: "", password: "", confirmPassword: "" });
+    } catch (error) { toast.error(error.response?.data?.message || "Unable to change password"); }
+    finally { setSecurityLoading(false); }
+  };
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-[#f8f6ef] pb-20">
@@ -63,13 +87,28 @@ const AccountPage = () => {
         <motion.aside className="rounded-[2rem] border border-[#ded8ca] bg-[#fbfaf6] p-6 shadow-[0_14px_40px_rgba(49,75,59,0.05)] sm:p-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b58a34]">Account details</p>
           <div className="mt-6 space-y-5"><Detail icon={UserRound} label="Name" value={user.name} /><Detail icon={Mail} label="Email" value={user.email} gold /><Detail icon={ShieldCheck} label="Account" value={user.role} /></div>
+          <div className={`mt-5 rounded-2xl border p-4 ${user.emailVerified ? "border-[#cadbc7] bg-[#eef5eb]" : "border-[#e5d2a6] bg-[#fff8e8]"}`}>
+            <div className="flex items-start gap-3"><MailCheck className={user.emailVerified ? "text-[#607660]" : "text-[#b58a34]"} size={20} /><div><p className="font-semibold text-[#354139]">{user.emailVerified ? "Email verified" : "Verify your email"}</p><p className="mt-1 text-xs leading-5 text-[#6b756d]">{user.emailVerified ? "Your account recovery email is confirmed." : "Confirm your address to protect your account and simplify recovery."}</p>{!user.emailVerified && <button type="button" disabled={securityLoading} onClick={resendVerification} className="mt-2 text-xs font-bold text-[#9b7528] disabled:opacity-50">Send verification email</button>}</div></div>
+          </div>
           <Link to="/orders" className="mt-6 flex items-center justify-center gap-2 rounded-full bg-[#314b3b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#263d30]"><PackageCheck size={17} /> View my orders</Link>
         </motion.aside>
+
+        <motion.section className="rounded-[2rem] border border-[#ded8ca] bg-white p-6 shadow-[0_18px_50px_rgba(49,75,59,0.07)] sm:p-9 lg:col-span-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+          <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7eee3] text-[#607660]"><KeyRound size={20} /></span><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#78907b]">Security</p><h2 className="font-serif text-2xl text-[#27352b]">Change your password</h2></div></div>
+          <form onSubmit={changePassword} className="mt-6 grid gap-4 md:grid-cols-3">
+            <PasswordField label="Current password" value={passwords.currentPassword} onChange={(value) => setPasswords({ ...passwords, currentPassword: value })} />
+            <PasswordField label="New password" value={passwords.password} onChange={(value) => setPasswords({ ...passwords, password: value })} />
+            <PasswordField label="Confirm new password" value={passwords.confirmPassword} onChange={(value) => setPasswords({ ...passwords, confirmPassword: value })} />
+            <button type="submit" disabled={securityLoading} className="rounded-full bg-[#314b3b] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50 md:col-start-3">{securityLoading ? "Saving…" : "Update password"}</button>
+          </form>
+        </motion.section>
       </div>
     </main>
   );
 };
 
 const Detail = ({ icon: Icon, label, value, gold }) => <div className="flex items-center gap-4 rounded-2xl border border-[#e3ddd1] bg-white p-4"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${gold ? "bg-[#f5ead2] text-[#9b7528]" : "bg-[#e7eee3] text-[#607660]"}`}><Icon size={19} /></span><div className="min-w-0"><p className="text-xs text-[#858d86]">{label}</p><p className="truncate font-semibold capitalize text-[#354139]">{value}</p></div></div>;
+
+const PasswordField = ({ label, value, onChange }) => <label className="text-sm font-semibold text-[#43503f]">{label}<input type="password" minLength={8} required value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-[#dcd5c5] bg-[#fdfcf9] px-4 py-3 outline-none focus:border-[#7C9279] focus:ring-4 focus:ring-[#e6eee3]" /></label>;
 
 export default AccountPage;

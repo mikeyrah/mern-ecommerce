@@ -23,6 +23,9 @@ import InfoPage from './pages/InfoPage';
 import Footer from './components/Footer';
 import BlogPage from './pages/BlogPage';
 import BlogArticlePage from './pages/BlogArticlePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import { useCartStore } from './stores/useCartStore';
 
 import Navbar from './components/Navbar';
@@ -64,6 +67,9 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={!user ? <SignUpPage /> : <Navigate to='/' />} />
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to='/' />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path='/secret-dashboard' element={user?.role === "admin" ? <AdminPage /> : <Navigate to='/login' />} />
         <Route path='/category/:category' element={ <CategoryPage /> } />
         <Route path='/brands/botani-eve/bath-body' element={<BotaniBathBodyPage />} />
