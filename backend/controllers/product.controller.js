@@ -1,6 +1,42 @@
 import { redis } from "../lib/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
+import Order from "../models/order.model.js";
+
+const isApprovedReview = (review) => !review.status || review.status === "approved";
+
+const updateRatingSummary = (product) => {
+    const approved = product.reviews.filter(isApprovedReview);
+    product.ratingCount = approved.length;
+    product.ratingAverage = approved.length
+        ? approved.reduce((sum, review) => sum + review.rating, 0) / approved.length
+        : 0;
+};
+
+const publicProduct = (product) => {
+    const value = product.toObject ? product.toObject() : { ...product };
+    value.reviews = (value.reviews || []).filter(isApprovedReview).map((review) => ({
+        _id: review._id,
+        username: review.username,
+        rating: review.rating,
+        comment: review.comment,
+        verifiedPurchase: Boolean(review.verifiedPurchase),
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+    }));
+    value.ratingCount = value.reviews.length;
+    value.ratingAverage = value.reviews.length
+        ? value.reviews.reduce((sum, review) => sum + review.rating, 0) / value.reviews.length
+        : 0;
+    return value;
+};
+
+const hasPurchasedProduct = (userId, productId) => Order.exists({
+    user: userId,
+    "products.product": productId,
+    paymentStatus: { $in: ["paid", "partially-refunded"] },
+    fulfillmentStatus: { $ne: "cancelled" },
+});
 
 const uploadProductImages = async (images = []) => {
     const uploads = images
@@ -27,7 +63,7 @@ export const getFeaturedProducts = async (req, res) => {
     try {
         let featuredProducts = await redis.get("featured_products")
         if(featuredProducts) {
-            return res.json(JSON.parse(featuredProducts))
+            return res.json(JSON.parse(featuredProducts).map(publicProduct))
         }
         featuredProducts = await Product.find({ isFeatured: true }).lean();
 
@@ -35,9 +71,10 @@ export const getFeaturedProducts = async (req, res) => {
             return res.status(404).json({ message: "No featured products found" });
         }
 
-        await redis.set("featured_products", JSON.stringify(featuredProducts));
+        const publicProducts = featuredProducts.map(publicProduct);
+        await redis.set("featured_products", JSON.stringify(publicProducts));
 
-        res.json(featuredProducts);
+        res.json(publicProducts);
         } catch (error) {
         console.log("Error in getFeaturedProducts controller", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -178,7 +215,7 @@ export const getFeaturedProducts = async (req, res) => {
             if (trackInventory !== undefined) product.trackInventory = Boolean(trackInventory);
             if (sku !== undefined) product.sku = String(sku).trim();
             await product.save();
-            return res.json({ product });
+            return res.json({ product: publicProduct(product) });
         } catch (error) {
             return res.status(500).json({ message: "Unable to update inventory" });
         }
@@ -189,7 +226,7 @@ export const getFeaturedProducts = async (req, res) => {
             const product = await Product.findById(req.params.id).lean();
             if (!product) return res.status(404).json({ message: "Product not found" });
             if (!product.images?.length && product.image) product.images = [product.image];
-            return res.json({ product });
+            return res.json({ product: publicProduct(product) });
         } catch (error) {
             return res.status(500).json({ message: "Server error", error: error.message });
         }
@@ -205,31 +242,106 @@ export const getFeaturedProducts = async (req, res) => {
             if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !comment) {
                 return res.status(400).json({ message: "A rating from 1 to 5 and review text are required" });
             }
+            if (comment.length > 1000) return res.status(400).json({ message: "Review must be 1000 characters or fewer" });
+
+            const verifiedPurchase = await hasPurchasedProduct(req.user._id, product._id);
+            if (!verifiedPurchase) return res.status(403).json({ message: "Only customers who purchased this product can review it" });
 
             const existingReview = product.reviews.find((review) => review.user.toString() === req.user._id.toString());
             if (existingReview) {
                 existingReview.rating = rating;
                 existingReview.comment = comment;
                 existingReview.username = req.user.name || req.user.email?.split("@")[0] || "Customer";
+                existingReview.verifiedPurchase = true;
+                existingReview.status = "pending";
+                existingReview.adminNote = "";
             } else {
                 product.reviews.push({
                     user: req.user._id,
                     username: req.user.name || req.user.email?.split("@")[0] || "Customer",
                     rating,
                     comment,
+                    verifiedPurchase: true,
+                    status: "pending",
                 });
             }
 
-            product.ratingCount = product.reviews.length;
-            product.ratingAverage = product.ratingCount
-                ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.ratingCount
-                : 0;
+            updateRatingSummary(product);
 
             await product.save();
-            return res.status(existingReview ? 200 : 201).json({ product });
+            return res.status(existingReview ? 200 : 201).json({
+                message: "Thank you. Your verified review is awaiting approval.",
+                product: publicProduct(product),
+            });
         } catch (error) {
             console.log("Error in addProductReview controller", error.message);
             return res.status(500).json({ message: "Server error", error: error.message });
+        }
+    };
+
+    export const getReviewEligibility = async (req, res) => {
+        try {
+            const product = await Product.findById(req.params.id);
+            if (!product) return res.status(404).json({ message: "Product not found" });
+            const eligible = Boolean(await hasPurchasedProduct(req.user._id, product._id));
+            const review = product.reviews.find((item) => item.user.toString() === req.user._id.toString());
+            return res.json({
+                eligible,
+                review: review ? { rating: review.rating, comment: review.comment, status: review.status || "approved" } : null,
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Unable to check review eligibility" });
+        }
+    };
+
+    export const getAdminReviews = async (_req, res) => {
+        try {
+            const products = await Product.find({ "reviews.0": { $exists: true } }).select("name image reviews").lean();
+            const reviews = products.flatMap((product) => product.reviews.map((review) => ({
+                ...review,
+                productId: product._id,
+                productName: product.name,
+                productImage: product.image,
+                status: review.status || "approved",
+            }))).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return res.json({ reviews });
+        } catch (error) {
+            return res.status(500).json({ message: "Unable to load reviews" });
+        }
+    };
+
+    export const moderateReview = async (req, res) => {
+        try {
+            const status = String(req.body?.status || "");
+            const adminNote = String(req.body?.adminNote || "").trim();
+            if (!["approved", "rejected"].includes(status)) return res.status(400).json({ message: "Choose approved or rejected" });
+            if (adminNote.length > 500) return res.status(400).json({ message: "Admin note must be 500 characters or fewer" });
+            const product = await Product.findById(req.params.productId);
+            const review = product?.reviews.id(req.params.reviewId);
+            if (!product || !review) return res.status(404).json({ message: "Review not found" });
+            review.status = status;
+            review.adminNote = adminNote;
+            updateRatingSummary(product);
+            await product.save();
+            await updateFeaturedProductsCache();
+            return res.json({ message: `Review ${status}`, review });
+        } catch (error) {
+            return res.status(500).json({ message: "Unable to moderate review" });
+        }
+    };
+
+    export const deleteReview = async (req, res) => {
+        try {
+            const product = await Product.findById(req.params.productId);
+            const review = product?.reviews.id(req.params.reviewId);
+            if (!product || !review) return res.status(404).json({ message: "Review not found" });
+            review.deleteOne();
+            updateRatingSummary(product);
+            await product.save();
+            await updateFeaturedProductsCache();
+            return res.json({ message: "Review deleted" });
+        } catch (error) {
+            return res.status(500).json({ message: "Unable to delete review" });
         }
     };
 
@@ -248,7 +360,7 @@ export const getFeaturedProducts = async (req, res) => {
                 }
             ]);
 
-            res.json({ products });
+            res.json({ products: products.map(publicProduct) });
         } catch (error) {
             console.log("Error in getRecommendedProducts controller", error.message);
             res.status(500).json({ message: "Server error", error: error.message });
@@ -260,7 +372,7 @@ export const getFeaturedProducts = async (req, res) => {
         try {
             
             const products = await Product.find({ category });
-            res.json({ products });
+            res.json({ products: products.map(publicProduct) });
         } catch (error) {
             console.log("Error in getProductsByCategory controller", error.message);
             res.status(500).json({ message: "Server error", error: error.message });
@@ -276,7 +388,7 @@ export const getFeaturedProducts = async (req, res) => {
                 ? { $or: [{ brand }, { brand: { $exists: false } }] }
                 : { brand };
             const products = await Product.find(filter);
-            res.json({ products });
+            res.json({ products: products.map(publicProduct) });
         } catch (error) {
             console.log("Error in getProductsByBrand controller", error.message);
             res.status(500).json({ message: "Server error", error: error.message });
@@ -304,8 +416,8 @@ export const getFeaturedProducts = async (req, res) => {
 
     export async function updateFeaturedProductsCache() {
         try {
-            const featuredProducts = await Product.find({ isFeatured: true }).lean();
-            await redis.set("featured_products", JSON.stringify(featuredProducts));
+            const featuredProducts = await Product.find({ isFeatured: true });
+            await redis.set("featured_products", JSON.stringify(featuredProducts.map(publicProduct)));
         } catch (error) {
             console.log("Error updating featured products cache", error.message);
         }

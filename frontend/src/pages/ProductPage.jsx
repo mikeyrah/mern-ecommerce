@@ -22,6 +22,7 @@ const ProductPage = () => {
   const [reviewing, setReviewing] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [reviewAccess, setReviewAccess] = useState({ loading: false, eligible: false, review: null });
 
   useEffect(() => {
     setLoading(true);
@@ -30,6 +31,17 @@ const ProductPage = () => {
       .catch((error) => toast.error(error.response?.data?.message || "Unable to load product"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!user) { setReviewAccess({ loading: false, eligible: false, review: null }); return; }
+    setReviewAccess((current) => ({ ...current, loading: true }));
+    axios.get(`/products/${id}/review-eligibility`)
+      .then(({ data }) => {
+        setReviewAccess({ loading: false, eligible: data.eligible, review: data.review });
+        if (data.review) { setRating(data.review.rating); setComment(data.review.comment); }
+      })
+      .catch(() => setReviewAccess({ loading: false, eligible: false, review: null }));
+  }, [id, user]);
 
   const images = useMemo(() => {
     if (!product) return [];
@@ -53,8 +65,8 @@ const ProductPage = () => {
     try {
       const { data } = await axios.post(`/products/${id}/reviews`, { rating, comment });
       setProduct(data.product);
-      setComment("");
-      toast.success("Your review is now live");
+      setReviewAccess({ loading: false, eligible: true, review: { rating, comment, status: "pending" } });
+      toast.success(data.message || "Your review is awaiting approval");
     } catch (error) {
       toast.error(error.response?.data?.message || "Unable to submit review");
     } finally {
@@ -100,18 +112,18 @@ const ProductPage = () => {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
             <div>
-              <p className="section-kicker text-[#7c9279]">Live testimonials</p>
+                <p className="section-kicker text-[#7c9279]">Verified testimonials</p>
               <h2 className="mt-3 font-serif text-4xl sm:text-5xl">What customers are saying</h2>
               <div className="mt-6 flex items-center gap-4"><span className="font-serif text-5xl">{Number(product.ratingAverage || 0).toFixed(1)}</span><div><Stars value={product.ratingAverage} /><p className="mt-1 text-sm text-[#707971]">Based on {product.ratingCount || 0} verified customer review{product.ratingCount === 1 ? "" : "s"}</p></div></div>
 
               <form onSubmit={submitReview} className="mt-9 rounded-2xl border border-[#ddd8cc] bg-[#f8f6ef] p-5">
                 <h3 className="font-serif text-2xl">Share your experience</h3>
-                {user ? <><div className="mt-4 flex gap-1" aria-label="Choose star rating">{[1,2,3,4,5].map((star) => <button type="button" key={star} onClick={() => setRating(star)} aria-label={`${star} stars`}><Star size={25} className={star <= rating ? "fill-[#b58a34] text-[#b58a34]" : "text-[#bbb6aa]"} /></button>)}</div><textarea required value={comment} onChange={(event) => setComment(event.target.value)} rows="4" maxLength="1000" className="mt-4 w-full rounded-xl border border-[#d8d2c5] bg-white p-3 text-sm outline-none focus:border-[#7c9279]" placeholder="Tell others what you loved..." /><button disabled={reviewing} className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#6f856c] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{reviewing && <Loader size={15} className="animate-spin" />} Publish review</button></> : <p className="mt-3 text-sm text-[#687269]"><Link to="/login" className="font-semibold underline">Sign in</Link> to leave a star rating and review.</p>}
+                {!user ? <p className="mt-3 text-sm text-[#687269]"><Link to="/login" className="font-semibold underline">Sign in</Link> to review a product you purchased.</p> : reviewAccess.loading ? <p className="mt-3 flex items-center gap-2 text-sm text-[#687269]"><Loader size={15} className="animate-spin" /> Checking your purchase…</p> : reviewAccess.eligible ? <>{reviewAccess.review && <p className={`mt-4 rounded-xl px-3 py-2 text-xs font-semibold ${reviewAccess.review.status === "approved" ? "bg-[#e4efe2] text-[#55705a]" : reviewAccess.review.status === "rejected" ? "bg-[#f3e2df] text-[#895149]" : "bg-[#f5ead2] text-[#8a6826]"}`}>Your review is {reviewAccess.review.status}. You can update it below; edits return to moderation.</p>}<div className="mt-4 flex gap-1" aria-label="Choose star rating">{[1,2,3,4,5].map((star) => <button type="button" key={star} onClick={() => setRating(star)} aria-label={`${star} stars`}><Star size={25} className={star <= rating ? "fill-[#b58a34] text-[#b58a34]" : "text-[#bbb6aa]"} /></button>)}</div><textarea required value={comment} onChange={(event) => setComment(event.target.value)} rows="4" maxLength="1000" className="mt-4 w-full rounded-xl border border-[#d8d2c5] bg-white p-3 text-sm outline-none focus:border-[#7c9279]" placeholder="Tell others what you loved..." /><div className="mt-2 flex items-center justify-between text-xs text-[#858c86]"><span>Verified purchase</span><span>{comment.length}/1000</span></div><button disabled={reviewing} className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#6f856c] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{reviewing && <Loader size={15} className="animate-spin" />} {reviewAccess.review ? "Update review" : "Submit for approval"}</button></> : <p className="mt-3 rounded-xl bg-[#f1eee6] p-4 text-sm leading-6 text-[#687269]">Reviews are reserved for verified purchases. Once you purchase this product, you can share your experience here.</p>}
               </form>
             </div>
 
             <div className="space-y-4">
-              {product.reviews?.length ? [...product.reviews].reverse().map((review) => <article key={review._id} className="rounded-2xl border border-[#e0dbcf] bg-white p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-semibold text-[#314b3b]">{review.username}</p><p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#849087]">Verified customer</p></div><Stars value={review.rating} size={16} /></div><p className="mt-5 leading-7 text-[#5f6962]">“{review.comment}”</p><time className="mt-4 block text-xs text-[#8a918c]">{new Date(review.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</time></article>) : <div className="rounded-[2rem] border border-dashed border-[#c9cfc5] bg-[#f2f5ef] px-8 py-16 text-center"><Leaf className="mx-auto text-[#7c9279]" /><h3 className="mt-4 font-serif text-2xl">Be the first to share your ritual</h3><p className="mt-2 text-sm text-[#6d776f]">Customer testimonials will appear here live after they are submitted.</p></div>}
+              {product.reviews?.length ? [...product.reviews].reverse().map((review) => <article key={review._id} className="rounded-2xl border border-[#e0dbcf] bg-white p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-semibold text-[#314b3b]">{review.username}</p>{review.verifiedPurchase && <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#849087]">Verified purchase</p>}</div><Stars value={review.rating} size={16} /></div><p className="mt-5 leading-7 text-[#5f6962]">“{review.comment}”</p><time className="mt-4 block text-xs text-[#8a918c]">{new Date(review.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</time></article>) : <div className="rounded-[2rem] border border-dashed border-[#c9cfc5] bg-[#f2f5ef] px-8 py-16 text-center"><Leaf className="mx-auto text-[#7c9279]" /><h3 className="mt-4 font-serif text-2xl">Be the first to share your ritual</h3><p className="mt-2 text-sm text-[#6d776f]">Approved reviews from verified customers will appear here.</p></div>}
             </div>
           </div>
         </div>

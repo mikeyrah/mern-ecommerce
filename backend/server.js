@@ -51,6 +51,7 @@ app.use("/api/auth/signup", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 app.use("/api/auth/reset-password", authLimiter);
 app.use("/api/auth/verify-email", authLimiter);
+app.post("/api/products/:id/reviews", authLimiter);
 app.use("/api/payments/create-checkout-session", checkoutLimiter);
 
 // The frontend sends authentication cookies with requests. When it runs on a

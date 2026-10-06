@@ -22,6 +22,21 @@ const reviewSchema = new mongoose.Schema({
         trim: true,
         maxlength: 1000,
     },
+    verifiedPurchase: {
+        type: Boolean,
+        default: false,
+    },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
+    },
+    adminNote: {
+        type: String,
+        trim: true,
+        maxlength: 500,
+        default: "",
+    },
 }, { timestamps: true });
 
 const productSchema = new mongoose.Schema({

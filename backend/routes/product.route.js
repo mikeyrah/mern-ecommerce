@@ -1,6 +1,6 @@
 import express from "express";
 import { getAllProducts, getFeaturedProducts, createProduct,
-     deleteProduct, getRecommendedProducts, getProductsByCategory, getProductsByBrand, toggleFeaturedProduct, updateProduct, updateInventory, getProductById, addProductReview } from "../controllers/product.controller.js";
+     deleteProduct, deleteReview, getAdminReviews, getRecommendedProducts, getProductsByCategory, getProductsByBrand, getReviewEligibility, moderateReview, toggleFeaturedProduct, updateProduct, updateInventory, getProductById, addProductReview } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -10,6 +10,10 @@ router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductsByCategory);
 router.get("/brand/:brand", getProductsByBrand);
 router.get("/recommendations", getRecommendedProducts);
+router.get("/reviews/admin", protectRoute, adminRoute, getAdminReviews);
+router.patch("/reviews/:productId/:reviewId", protectRoute, adminRoute, moderateReview);
+router.delete("/reviews/:productId/:reviewId", protectRoute, adminRoute, deleteReview);
+router.get("/:id/review-eligibility", protectRoute, getReviewEligibility);
 router.get("/:id", getProductById);
 router.post("/", protectRoute, adminRoute, createProduct);
 router.post("/:id/reviews", protectRoute, addProductReview);
