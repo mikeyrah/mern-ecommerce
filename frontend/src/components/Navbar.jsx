@@ -1,14 +1,16 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, Search, X } from 'lucide-react';
+import { Heart, ShoppingCart, UserPlus, LogIn, LogOut, Lock, Search, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useUserStore } from '../stores/useUserStore';
 import { useCartStore } from '../stores/useCartStore';
 import axios from '../lib/axios';
+import { useWishlistStore } from '../stores/useWishlistStore';
 
 const Navbar = () => {
     const { user, logout } = useUserStore();
     const isAdmin = user?.role === "admin";
     const { cart } = useCartStore();
+    const wishlistCount = useWishlistStore((state) => state.wishlist.length);
     const navigate = useNavigate();
     const searchRef = useRef(null);
     const [searchOpen, setSearchOpen] = useState(false);
@@ -35,6 +37,9 @@ const Navbar = () => {
         </Link>
         <Link to="/journal" className='hidden text-[#596259] hover:text-[#B58A34] transition duration-300 ease-in-out md:inline'>Journal</Link>
         <div ref={searchRef} className="relative"><button onClick={() => setSearchOpen((open) => !open)} aria-label="Search products" className="flex items-center gap-1 text-[#596259] transition hover:text-[#B58A34]"><Search size={20} /><span className="hidden lg:inline">Search</span></button>{searchOpen && <div className="fixed left-3 right-3 top-[4.5rem] rounded-2xl border border-[#ddd6c8] bg-white p-3 shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-10 sm:w-[390px]"><form onSubmit={submitSearch} className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7c9279]" size={17} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} maxLength="100" placeholder="Search the collective" className="w-full rounded-full border border-[#d8d2c5] py-2.5 pl-10 pr-10 text-sm outline-none focus:ring-4 focus:ring-[#e6eee3]" /><button type="button" onClick={() => { setQuery(""); setSuggestions([]); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b8e88]" aria-label="Clear search"><X size={16} /></button></form>{suggestions.length > 0 && <div className="mt-3 divide-y divide-[#eee9de]">{suggestions.map((product) => <Link key={product._id} to={`/products/${product._id}`} onClick={() => { setSearchOpen(false); setSuggestions([]); }} className="flex items-center gap-3 py-3"><img src={product.images?.[0] || product.image} alt="" className="h-12 w-12 rounded-xl object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#354139]">{product.name}</p><p className="text-xs capitalize text-[#858c85]">{product.brand?.replaceAll("-", " ")} · ${Number(product.price).toFixed(2)}</p></div></Link>)}</div>}<button onClick={submitSearch} className="mt-2 w-full rounded-full bg-[#314b3b] py-2.5 text-sm font-semibold text-white">View all results</button></div>}</div>
+        { user && (
+            <Link to="/wishlist" className="relative text-[#596259] transition hover:text-[#B58A34]" aria-label={`Wishlist with ${wishlistCount} items`}><Heart size={20} />{wishlistCount > 0 && <span className="absolute -right-2 -top-2 rounded-full bg-[#B58A34] px-1.5 text-[10px] font-bold text-white">{wishlistCount}</span>}</Link>
+        )}
         { user && (
             <Link
              to={"/cart"}

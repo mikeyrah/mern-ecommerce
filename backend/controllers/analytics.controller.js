@@ -76,6 +76,19 @@ export const getSearchAnalytics = async () => {
     return { totalSearches, topSearches, noResultSearches };
 };
 
+export const getWishlistAnalytics = async () => {
+    const [summary] = await User.aggregate([
+        { $unwind: "$wishlist" },
+        { $group: { _id: "$wishlist.product", saves: { $sum: 1 }, alerts: { $sum: { $cond: ["$wishlist.notifyBackInStock", 1, 0] } } } },
+        { $sort: { saves: -1 } },
+        { $limit: 10 },
+        { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+        { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+        { $group: { _id: null, popularProducts: { $push: { productId: "$_id", name: { $ifNull: ["$product.name", "Deleted product"] }, saves: "$saves", alerts: "$alerts" } }, totalSaved: { $sum: "$saves" } } },
+    ]);
+    return summary || { totalSaved: 0, popularProducts: [] };
+};
+
 function getDatesInRange(startDate, endDate) {
     const dates = [];
     let currentDate = new Date(startDate);

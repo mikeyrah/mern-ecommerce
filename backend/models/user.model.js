@@ -30,6 +30,30 @@ const userSchema = new mongoose.Schema({
         }
     }
     ],
+    wishlist: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+            required: true
+        },
+        priceWhenAdded: {
+            type: Number,
+            min: 0,
+            required: true
+        },
+        wasInStock: {
+            type: Boolean,
+            default: true
+        },
+        notifyBackInStock: {
+            type: Boolean,
+            default: false
+        },
+        addedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     role: {
         type: String,
         enum: ["customer", "admin"],

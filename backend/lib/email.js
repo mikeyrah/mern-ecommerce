@@ -53,6 +53,12 @@ export const sendPasswordReset = (user, token) => {
     });
 };
 
+export const sendBackInStock = (user, product) => sendEmail({
+    to: user.email,
+    subject: `${product.name} is back in stock`,
+    html: layout("Wishlist update", "A favorite is back.", `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(user.name || "there")}, <strong>${escapeHtml(product.name)}</strong> is available again.</p>${product.image ? `<img src="${escapeHtml(product.image)}" alt="" width="220" style="display:block;width:220px;max-width:100%;margin:24px 0;border-radius:18px">` : ""}${storeUrl() ? actionButton(`${storeUrl()}/products/${product._id}`, "Shop this product") : ""}<p style="margin-top:24px;font-size:13px;line-height:1.6;color:#7a817a">You requested this update from your Stewart-Tate wishlist.</p>`),
+});
+
 const itemRows = (order) => order.products.map((item) => `<tr><td style="padding:10px 0;border-bottom:1px solid #ece7dd"><strong>${escapeHtml(item.name || "Product")}</strong><br><span style="font-size:13px;color:#707970">Qty ${item.quantity}</span></td><td align="right" style="padding:10px 0;border-bottom:1px solid #ece7dd">${money(item.price * item.quantity)}</td></tr>`).join("");
 
 const fulfillment = (order) => order.deliveryMethod === "pickup"

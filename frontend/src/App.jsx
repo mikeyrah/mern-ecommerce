@@ -29,7 +29,9 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import SearchPage from './pages/SearchPage';
+import WishlistPage from './pages/WishlistPage';
 import { useCartStore } from './stores/useCartStore';
+import { useWishlistStore } from './stores/useWishlistStore';
 
 import Navbar from './components/Navbar';
 import { useUserStore } from './stores/useUserStore';
@@ -37,6 +39,7 @@ import { useUserStore } from './stores/useUserStore';
 function App() {
   const {user, checkAuth, checkingAuth } = useUserStore();
   const { getCartItems, getCoupon, clearCart } = useCartStore();
+  const { fetchWishlist, clearWishlist } = useWishlistStore();
 
   useEffect(() => {
     checkAuth();
@@ -47,10 +50,12 @@ function App() {
     if (user) {
       getCartItems();
       getCoupon();
+      fetchWishlist();
     } else {
       clearCart();
+      clearWishlist();
     }
-  }, [user, getCartItems, getCoupon, clearCart]);
+  }, [user, getCartItems, getCoupon, clearCart, fetchWishlist, clearWishlist]);
 
   if (checkingAuth) return <LoadingSpinner />;
 
@@ -74,6 +79,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/wishlist" element={user ? <WishlistPage /> : <Navigate to='/login' />} />
         <Route path='/secret-dashboard' element={user?.role === "admin" ? <AdminPage /> : <Navigate to='/login' />} />
         <Route path='/category/:category' element={ <CategoryPage /> } />
         <Route path='/brands/botani-eve/bath-body' element={<BotaniBathBodyPage />} />

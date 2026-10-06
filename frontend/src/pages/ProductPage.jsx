@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Leaf, Loader, ShoppingBag, Star } from "lucide-react";
+import { ChevronDown, Heart, Leaf, Loader, ShoppingBag, Star } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "../lib/axios";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
+import { useWishlistStore } from "../stores/useWishlistStore";
 
 const Stars = ({ value = 0, size = 18 }) => (
   <span className="inline-flex" aria-label={`${Number(value).toFixed(1)} out of 5 stars`}>
@@ -16,6 +17,7 @@ const ProductPage = () => {
   const { id } = useParams();
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
+  const { isSaved, toggleWishlist } = useWishlistStore();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,7 @@ const ProductPage = () => {
   const isRecentlyAdded = product && (product.isNew || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000);
   const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
   const isLowStock = product.trackInventory && product.stock > 0 && product.stock <= product.lowStockThreshold;
+  const saved = isSaved(product._id);
 
   const handleAddToBag = () => {
     if (isOutOfStock) return toast.error("This product is currently out of stock");
@@ -98,7 +101,7 @@ const ProductPage = () => {
           {isOutOfStock ? <p className="mt-3 text-sm font-semibold text-[#92584d]">Currently out of stock</p> : isLowStock ? <p className="mt-3 text-sm font-semibold text-[#9a742d]">Only {product.stock} left in stock</p> : product.trackInventory ? <p className="mt-3 text-sm font-semibold text-[#607660]">In stock and ready to ship</p> : null}
           <p className="mt-6 text-base leading-7 text-[#5e6961]">{product.description}</p>
 
-          <button type="button" onClick={handleAddToBag} disabled={isOutOfStock} className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-[#314b3b] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#263d30] disabled:cursor-not-allowed disabled:bg-[#aaa9a2]"><ShoppingBag size={19} /> {isOutOfStock ? "Sold out" : "Add to bag"}</button>
+          <div className="mt-8 grid grid-cols-[1fr_auto] gap-3"><button type="button" onClick={handleAddToBag} disabled={isOutOfStock} className="flex w-full items-center justify-center gap-3 rounded-full bg-[#314b3b] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#263d30] disabled:cursor-not-allowed disabled:bg-[#aaa9a2]"><ShoppingBag size={19} /> {isOutOfStock ? "Sold out" : "Add to bag"}</button><button type="button" onClick={() => user ? toggleWishlist(product) : toast.error("Please sign in to save favorites")} aria-label={saved ? "Remove from wishlist" : "Save to wishlist"} className={`flex h-14 w-14 items-center justify-center rounded-full border bg-white ${saved ? "border-[#a15f6c] text-[#a15f6c]" : "border-[#cfc8ba] text-[#657168]"}`}><Heart className={saved ? "fill-current" : ""} /></button></div>
           <p className="mt-3 text-center text-xs text-[#7a827c]">Thoughtfully packed and prepared for you</p>
 
           <div className="mt-9 divide-y divide-[#d8d4c9] border-y border-[#d8d4c9]">

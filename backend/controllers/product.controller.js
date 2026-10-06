@@ -3,6 +3,8 @@ import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import Order from "../models/order.model.js";
 import SearchLog from "../models/searchLog.model.js";
+import User from "../models/user.model.js";
+import { sendBackInStock } from "../lib/email.js";
 
 const isApprovedReview = (review) => !review.status || review.status === "approved";
 
@@ -41,6 +43,18 @@ const hasPurchasedProduct = (userId, productId) => Order.exists({
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const allowedBrands = new Set(["botani-eve", "the-krafted-charm", "the-velvet-bakery"]);
+
+const notifyWishlistRestock = async (product) => {
+    const users = await User.find({ wishlist: { $elemMatch: { product: product._id, notifyBackInStock: true } } });
+    await Promise.allSettled(users.map((user) => sendBackInStock(user, product)));
+    if (users.length) {
+        await User.updateMany(
+            { _id: { $in: users.map((user) => user._id) } },
+            { $set: { "wishlist.$[item].notifyBackInStock": false, "wishlist.$[item].wasInStock": true } },
+            { arrayFilters: [{ "item.product": product._id }] }
+        );
+    }
+};
 
 export const searchProducts = async (req, res) => {
     try {
@@ -215,6 +229,7 @@ export const getFeaturedProducts = async (req, res) => {
             }
 
             const { name, description, price, image, images, category, brand, details = "", ingredients = [], isNew = false, sku, trackInventory, stock, lowStockThreshold } = req.body;
+            const wasOutOfStock = product.trackInventory && product.stock <= 0;
 
             if (!name || !description || price === "" || price === undefined || !category || !brand) {
                 return res.status(400).json({ message: "Name, description, price, category, and brand are required" });
@@ -249,6 +264,7 @@ export const getFeaturedProducts = async (req, res) => {
             if (lowStockThreshold !== undefined) product.lowStockThreshold = Math.max(0, Number(lowStockThreshold) || 0);
 
             const updatedProduct = await product.save();
+            if (wasOutOfStock && (!updatedProduct.trackInventory || updatedProduct.stock > 0)) notifyWishlistRestock(updatedProduct).catch((error) => console.log("Wishlist restock notification failed", error.message));
 
             const removedImages = previousImages.filter((url) => !nextImages.includes(url));
             removedImages.forEach((url) => {
@@ -270,6 +286,7 @@ export const getFeaturedProducts = async (req, res) => {
         try {
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: "Product not found" });
+            const wasOutOfStock = product.trackInventory && product.stock <= 0;
             const { stock, lowStockThreshold, trackInventory, sku } = req.body ?? {};
             if (stock !== undefined && (!Number.isInteger(Number(stock)) || Number(stock) < 0)) return res.status(400).json({ message: "Stock must be a non-negative whole number" });
             if (lowStockThreshold !== undefined && (!Number.isInteger(Number(lowStockThreshold)) || Number(lowStockThreshold) < 0)) return res.status(400).json({ message: "Low-stock threshold must be a non-negative whole number" });
@@ -278,6 +295,7 @@ export const getFeaturedProducts = async (req, res) => {
             if (trackInventory !== undefined) product.trackInventory = Boolean(trackInventory);
             if (sku !== undefined) product.sku = String(sku).trim();
             await product.save();
+            if (wasOutOfStock && (!product.trackInventory || product.stock > 0)) notifyWishlistRestock(product).catch((error) => console.log("Wishlist restock notification failed", error.message));
             return res.json({ product: publicProduct(product) });
         } catch (error) {
             return res.status(500).json({ message: "Unable to update inventory" });

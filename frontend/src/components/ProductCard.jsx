@@ -1,14 +1,17 @@
 import React from 'react'
 import toast from 'react-hot-toast';
-import { ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { useUserStore } from '../stores/useUserStore';
 import { useCartStore } from '../stores/useCartStore';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
+import { useWishlistStore } from '../stores/useWishlistStore';
 
  const ProductCard = ({product}) => {
     const { user } = useUserStore();
     const { addToCart } = useCartStore();
+    const { isSaved, toggleWishlist } = useWishlistStore();
+    const saved = isSaved(product._id);
     const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
     const handleAddToCart = () => {
         if (isOutOfStock) return;
@@ -22,6 +25,7 @@ import { Star } from 'lucide-react';
 
   return (
     <div className='flex w-full relative flex-col overflow-hidden rounded-2xl border border-[#e1dacb] bg-white shadow-[0_12px_28px_rgba(73,65,43,0.08)]'>
+        <button onClick={() => user ? toggleWishlist(product) : toast.error("Please sign in to save favorites")} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`} className={`absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md transition hover:scale-105 ${saved ? "text-[#a15f6c]" : "text-[#657168]"}`}><Heart size={19} className={saved ? "fill-current" : ""} /></button>
         <Link to={`/products/${product._id}`} className='relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl'>
             {isOutOfStock && <span className="absolute right-3 top-3 z-10 rounded-full bg-[#7f4d45] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Sold out</span>}
             {(product.isNew || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && <span className="absolute left-3 top-3 z-10 rounded-full bg-[#314b3b] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">New</span>}

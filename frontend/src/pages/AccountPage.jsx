@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Check, ImagePlus, KeyRound, Loader, Mail, MailCheck, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, Heart, ImagePlus, KeyRound, Loader, Mail, MailCheck, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -91,6 +91,7 @@ const AccountPage = () => {
             <div className="flex items-start gap-3"><MailCheck className={user.emailVerified ? "text-[#607660]" : "text-[#b58a34]"} size={20} /><div><p className="font-semibold text-[#354139]">{user.emailVerified ? "Email verified" : "Verify your email"}</p><p className="mt-1 text-xs leading-5 text-[#6b756d]">{user.emailVerified ? "Your account recovery email is confirmed." : "Confirm your address to protect your account and simplify recovery."}</p>{!user.emailVerified && <button type="button" disabled={securityLoading} onClick={resendVerification} className="mt-2 text-xs font-bold text-[#9b7528] disabled:opacity-50">Send verification email</button>}</div></div>
           </div>
           <Link to="/orders" className="mt-6 flex items-center justify-center gap-2 rounded-full bg-[#314b3b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#263d30]"><PackageCheck size={17} /> View my orders</Link>
+          <Link to="/wishlist" className="mt-3 flex items-center justify-center gap-2 rounded-full border border-[#728775] px-5 py-3 text-sm font-semibold text-[#526757] transition hover:bg-[#e9efe6]"><Heart size={17} /> View my wishlist</Link>
         </motion.aside>
 
         <motion.section className="rounded-[2rem] border border-[#ded8ca] bg-white p-6 shadow-[0_18px_50px_rgba(49,75,59,0.07)] sm:p-9 lg:col-span-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
