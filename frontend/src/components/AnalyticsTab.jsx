@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import axios from '../lib/axios';
-import { Users, Package, ShoppingCart, DollarSign } from 'lucide-react';
+import { Users, Package, ShoppingCart, DollarSign, Search } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const AnalyticsTab = () => {
@@ -15,6 +15,7 @@ const AnalyticsTab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dailySalesData, setDailySalesData] = useState([]);
+  const [searchAnalytics, setSearchAnalytics] = useState({ totalSearches: 0, topSearches: [], noResultSearches: [] });
 
   useEffect(() => {
     const fetchAnalyticsData = async () => {
@@ -34,6 +35,7 @@ const AnalyticsTab = () => {
             revenue: day.revenue || 0,
           }))
         );
+        setSearchAnalytics(response.data.searchAnalytics || { totalSearches: 0, topSearches: [], noResultSearches: [] });
       } catch (error) {
         console.error('Error fetching analytics data:', error);
         setError(error.response?.data?.message || 'Unable to load analytics data.');
@@ -114,6 +116,7 @@ const AnalyticsTab = () => {
         </LineChart>
         </ResponsiveContainer>
     </motion.div>
+    <div className="mt-8 grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border border-[#e1dacb] bg-white p-6 shadow-sm"><div className="flex items-center gap-3"><span className="rounded-full bg-[#e6eee3] p-3 text-[#607660]"><Search size={20} /></span><div><p className="text-sm font-semibold text-[#7C9279]">Last 30 days</p><h3 className="font-serif text-2xl text-[#27352b]">{searchAnalytics.totalSearches} product searches</h3></div></div><h4 className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-[#687064]">Top searches</h4><div className="mt-3 space-y-2">{searchAnalytics.topSearches.length ? searchAnalytics.topSearches.map((item) => <div key={item._id} className="flex items-center justify-between rounded-xl bg-[#f8f6ef] px-4 py-3"><span className="font-semibold capitalize text-[#354139]">{item._id}</span><span className="text-xs text-[#7a817a]">{item.searches} searches</span></div>) : <p className="text-sm text-[#7a817a]">Search activity will appear here.</p>}</div></section><section className="rounded-2xl border border-[#e1dacb] bg-white p-6 shadow-sm"><h3 className="font-serif text-2xl text-[#27352b]">Catalog opportunities</h3><p className="mt-2 text-sm leading-6 text-[#687064]">Searches returning no products can reveal what customers want next.</p><div className="mt-5 space-y-2">{searchAnalytics.noResultSearches.length ? searchAnalytics.noResultSearches.map((item) => <div key={item._id} className="flex items-center justify-between rounded-xl bg-[#fff7e7] px-4 py-3"><span className="font-semibold capitalize text-[#5d4b28]">{item._id}</span><span className="text-xs text-[#8a6826]">{item.searches} times</span></div>) : <p className="rounded-xl bg-[#eef4eb] p-4 text-sm text-[#607660]">No repeated zero-result searches yet.</p>}</div></section></div>
   </div>
   )
 };

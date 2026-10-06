@@ -2,6 +2,7 @@ import { redis } from "../lib/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import Order from "../models/order.model.js";
+import SearchLog from "../models/searchLog.model.js";
 
 const isApprovedReview = (review) => !review.status || review.status === "approved";
 
@@ -37,6 +38,68 @@ const hasPurchasedProduct = (userId, productId) => Order.exists({
     paymentStatus: { $in: ["paid", "partially-refunded"] },
     fulfillmentStatus: { $ne: "cancelled" },
 });
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const allowedBrands = new Set(["botani-eve", "the-krafted-charm", "the-velvet-bakery"]);
+
+export const searchProducts = async (req, res) => {
+    try {
+        const query = String(req.query.q || "").trim().slice(0, 100);
+        const brand = String(req.query.brand || "").trim();
+        const category = String(req.query.category || "").trim().slice(0, 100);
+        const inStock = req.query.inStock === "true";
+        const minPrice = req.query.minPrice === undefined || req.query.minPrice === "" ? null : Number(req.query.minPrice);
+        const maxPrice = req.query.maxPrice === undefined || req.query.maxPrice === "" ? null : Number(req.query.maxPrice);
+        const sort = String(req.query.sort || "relevance");
+        const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(48, Math.max(1, Number.parseInt(req.query.limit, 10) || 24));
+        if (brand && !allowedBrands.has(brand)) return res.status(400).json({ message: "Invalid brand filter" });
+        if ((minPrice !== null && (!Number.isFinite(minPrice) || minPrice < 0)) || (maxPrice !== null && (!Number.isFinite(maxPrice) || maxPrice < 0))) return res.status(400).json({ message: "Invalid price range" });
+        if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) return res.status(400).json({ message: "Minimum price cannot exceed maximum price" });
+
+        const filter = {};
+        if (query) {
+            const pattern = new RegExp(escapeRegex(query), "i");
+            filter.$or = [{ name: pattern }, { description: pattern }, { category: pattern }, { brand: pattern }, { details: pattern }, { ingredients: pattern }];
+        }
+        if (brand) filter.brand = brand;
+        if (category) filter.category = category;
+        if (minPrice !== null || maxPrice !== null) filter.price = { ...(minPrice !== null ? { $gte: minPrice } : {}), ...(maxPrice !== null ? { $lte: maxPrice } : {}) };
+        if (inStock) filter.$and = [{ $or: [{ trackInventory: false }, { trackInventory: { $exists: false } }, { stock: { $gt: 0 } }] }];
+
+        const sorts = {
+            newest: { createdAt: -1 },
+            "price-low": { price: 1 },
+            "price-high": { price: -1 },
+            rating: { ratingAverage: -1, ratingCount: -1 },
+            popular: { soldCount: -1, ratingCount: -1 },
+            relevance: query ? { isFeatured: -1, soldCount: -1, createdAt: -1 } : { createdAt: -1 },
+        };
+        const sortOrder = sorts[sort] || sorts.relevance;
+        const [products, total, categories] = await Promise.all([
+            Product.find(filter).sort(sortOrder).skip((page - 1) * limit).limit(limit),
+            Product.countDocuments(filter),
+            Product.distinct("category"),
+        ]);
+        if (query) SearchLog.create({ query: query.toLowerCase(), resultCount: total }).catch(() => {});
+        return res.json({ products: products.map(publicProduct), total, page, pages: Math.max(1, Math.ceil(total / limit)), filters: { brands: [...allowedBrands], categories: categories.sort() } });
+    } catch (error) {
+        console.log("Error searching products", error.message);
+        return res.status(500).json({ message: "Unable to search products" });
+    }
+};
+
+export const getSearchSuggestions = async (req, res) => {
+    try {
+        const query = String(req.query.q || "").trim().slice(0, 100);
+        if (query.length < 2) return res.json({ suggestions: [] });
+        const pattern = new RegExp(escapeRegex(query), "i");
+        const products = await Product.find({ $or: [{ name: pattern }, { category: pattern }, { brand: pattern }] }).select("name image images brand category price").limit(6).lean();
+        return res.json({ suggestions: products });
+    } catch (error) {
+        return res.status(500).json({ message: "Unable to load suggestions" });
+    }
+};
 
 const uploadProductImages = async (images = []) => {
     const uploads = images

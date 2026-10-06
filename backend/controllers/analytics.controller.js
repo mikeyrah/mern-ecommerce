@@ -1,6 +1,7 @@
 import Order from '../models/order.model.js';
 import Product from '../models/product.model.js';
 import User from '../models/user.model.js';
+import SearchLog from '../models/searchLog.model.js';
 
 export const getAnalyticsData = async () => {
     const totalUsers = await User.countDocuments();
@@ -63,6 +64,16 @@ export const getDailySalesData = async (startDate, endDate) => {
     } catch (error) {
         throw error;
     }
+};
+
+export const getSearchAnalytics = async () => {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [topSearches, noResultSearches, totalSearches] = await Promise.all([
+        SearchLog.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: "$query", searches: { $sum: 1 }, averageResults: { $avg: "$resultCount" } } }, { $sort: { searches: -1 } }, { $limit: 10 }]),
+        SearchLog.aggregate([{ $match: { createdAt: { $gte: since }, resultCount: 0 } }, { $group: { _id: "$query", searches: { $sum: 1 } } }, { $sort: { searches: -1 } }, { $limit: 8 }]),
+        SearchLog.countDocuments({ createdAt: { $gte: since } }),
+    ]);
+    return { totalSearches, topSearches, noResultSearches };
 };
 
 function getDatesInRange(startDate, endDate) {
