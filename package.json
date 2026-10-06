@@ -4,7 +4,7 @@
   "description": "",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "nodemon backend/server.js",
+    "dev": "node --watch backend/server.js",
     "start": "node backend/server.js",
     "build": "npm ci && npm ci --prefix frontend && npm run build --prefix frontend"
   },
@@ -35,7 +35,5 @@
     "stripe": "^22.3.2",
     "zustand": "^5.0.14"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+  "devDependencies": {}
 }
