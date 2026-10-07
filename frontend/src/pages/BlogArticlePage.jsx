@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Leaf, Loader } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { blogPosts, getBlogPost } from "../data/blogPosts";
+import { getBlogPost } from "../data/blogPosts";
 import axios from "../lib/axios";
+import { useSeo } from "../hooks/useSeo";
 
 const BlogArticlePage = () => {
   const { slug } = useParams();
-  const fallback = getBlogPost(slug);
+  const fallback = useMemo(() => getBlogPost(slug), [slug]);
   const [post, setPost] = useState(fallback || null);
   const [loading, setLoading] = useState(!fallback);
-  useEffect(() => { axios.get(`/blog/${slug}`).then(({ data }) => setPost(data.post)).catch(() => setPost(fallback || null)).finally(() => setLoading(false)); }, [slug]);
+  useEffect(() => { axios.get(`/blog/${slug}`).then(({ data }) => setPost(data.post)).catch(() => setPost(fallback || null)).finally(() => setLoading(false)); }, [fallback, slug]);
+  useSeo({ title: post?.title || "Journal story", description: post?.excerpt?.slice(0, 160) || "Stories and seasonal inspiration from Stewart-Tate & Co.", image: post?.coverImage?.url, type: "article", path: `/journal/${slug}`, noindex: !post, schema: post ? { "@context": "https://schema.org", "@type": "Article", headline: post.title, description: post.excerpt, image: post.coverImage?.url ? [post.coverImage.url] : undefined, datePublished: post.publishedAt || post.createdAt, dateModified: post.updatedAt || post.publishedAt || post.createdAt, author: { "@type": "Organization", name: "Stewart-Tate & Co." }, publisher: { "@type": "Organization", name: "Stewart-Tate & Co." }, mainEntityOfPage: new URL(`/journal/${slug}`, window.location.origin).toString() } : undefined });
   if (loading) return <main className="flex min-h-[70vh] items-center justify-center bg-[#f8f6ef]"><Loader className="animate-spin text-[#6f856c]" /></main>;
   if (!post) return <main className="min-h-[70vh] bg-[#f8f6ef] px-6 py-24 text-center"><h1 className="font-serif text-4xl">Story not found</h1><Link to="/journal" className="mt-5 inline-block text-[#58715d]">Return to the journal</Link></main>;
   const date = post.date || new Date(post.publishedAt || post.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });

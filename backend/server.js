@@ -21,6 +21,8 @@ import { stripeWebhook } from "./controllers/payment.controller.js";
 
 import { connectDB } from "./lib/db.js";
 import { startCartRecoveryScheduler } from "./lib/cartRecovery.js";
+import Product from "./models/product.model.js";
+import BlogPost from "./models/blogPost.model.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
@@ -100,6 +102,33 @@ app.use("/api/recovery", recoveryRoutes);
 
 app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+const publicStoreUrl = () => (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim().replace(/\/$/, "");
+const xmlEscape = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+
+app.get("/robots.txt", (_req, res) => {
+    res.type("text/plain").send(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /account\nDisallow: /cart\nDisallow: /wishlist\nDisallow: /orders\nDisallow: /secret-dashboard\nDisallow: /purchase-success\nDisallow: /purchase-cancel\nDisallow: /search\nSitemap: ${publicStoreUrl()}/sitemap.xml\n`);
+});
+
+app.get("/sitemap.xml", async (_req, res) => {
+    try {
+        const [products, posts] = await Promise.all([
+            Product.find({}).select("_id updatedAt").lean(),
+            BlogPost.find({ status: "published" }).select("slug updatedAt").lean(),
+        ]);
+        const staticPaths = ["/", "/brands/botani-eve", "/brands/botani-eve/bath-body", "/brands/botani-eve/seasonal", "/brands/botani-eve/home-scents", "/brands/botani-eve/men", "/brands/botani-eve/baby", "/brands/botani-eve/lip-gloss", "/brands/the-krafted-charm", "/brands/the-velvet-bakery", "/journal", "/contact", "/shipping", "/returns", "/privacy", "/terms"];
+        const entries = [
+            ...staticPaths.map((path) => ({ path })),
+            ...products.map((product) => ({ path: `/products/${product._id}`, updatedAt: product.updatedAt })),
+            ...posts.map((post) => ({ path: `/journal/${post.slug}`, updatedAt: post.updatedAt })),
+        ];
+        const urls = entries.map((entry) => `<url><loc>${xmlEscape(`${publicStoreUrl()}${entry.path}`)}</loc>${entry.updatedAt ? `<lastmod>${new Date(entry.updatedAt).toISOString()}</lastmod>` : ""}<changefreq>${entry.path === "/" ? "weekly" : "monthly"}</changefreq><priority>${entry.path === "/" ? "1.0" : entry.path.startsWith("/products/") ? "0.8" : "0.7"}</priority></url>`).join("");
+        res.set("Cache-Control", "public, max-age=3600");
+        return res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+    } catch (error) {
+        return res.status(500).type("text/plain").send("Unable to generate sitemap");
+    }
 });
 
 const frontendDistPath = path.resolve(__dirname, "..", "frontend", "dist");

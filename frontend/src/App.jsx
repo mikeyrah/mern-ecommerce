@@ -32,6 +32,7 @@ import SearchPage from './pages/SearchPage';
 import WishlistPage from './pages/WishlistPage';
 import { useCartStore } from './stores/useCartStore';
 import { useWishlistStore } from './stores/useWishlistStore';
+import RouteSeo from './components/RouteSeo';
 
 import Navbar from './components/Navbar';
 import { useUserStore } from './stores/useUserStore';
@@ -70,6 +71,7 @@ function App() {
       </div>
 
       <div className='relative z-50 pt-20'>
+      <RouteSeo />
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />

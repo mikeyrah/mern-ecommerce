@@ -6,6 +6,7 @@ import axios from "../lib/axios";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import { useWishlistStore } from "../stores/useWishlistStore";
+import Seo from "../components/Seo";
 
 const Stars = ({ value = 0, size = 18 }) => (
   <span className="inline-flex" aria-label={`${Number(value).toFixed(1)} out of 5 stars`}>
@@ -82,6 +83,7 @@ const ProductPage = () => {
 
   return (
     <main className="min-h-screen bg-[#f8f6ef] text-[#27352b]">
+      <Seo title={product.name} description={product.description.slice(0, 160)} image={images[0]} type="product" path={`/products/${product._id}`} schema={{ "@context": "https://schema.org", "@type": "Product", name: product.name, description: product.description, image: images, sku: product.sku || product._id, brand: { "@type": "Brand", name: product.brand?.replaceAll("-", " ") || "Stewart-Tate & Co." }, offers: { "@type": "Offer", priceCurrency: "USD", price: Number(product.price).toFixed(2), availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock", url: new URL(`/products/${product._id}`, window.location.origin).toString() }, ...(product.ratingCount > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: Number(product.ratingAverage).toFixed(1), reviewCount: product.ratingCount }, review: product.reviews.map((review) => ({ "@type": "Review", author: { "@type": "Person", name: review.username }, reviewRating: { "@type": "Rating", ratingValue: review.rating, bestRating: 5 }, reviewBody: review.comment, datePublished: review.createdAt })) } : {}) }} />
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-20">
         <div className="grid gap-4 sm:grid-cols-[88px_1fr]">
           <div className="order-2 flex gap-3 overflow-x-auto sm:order-1 sm:flex-col">
