@@ -1,5 +1,16 @@
 import Product from "../models/product.model.js";
 
+const markCartChanged = (user) => {
+    if (user.cartItems.length) {
+        user.cartUpdatedAt = new Date();
+        user.cartReminderCartUpdatedAt = undefined;
+    } else {
+        user.cartUpdatedAt = undefined;
+        user.cartReminderSentAt = undefined;
+        user.cartReminderCartUpdatedAt = undefined;
+    }
+};
+
 export const getCartProducts = async (req, res) => {
     try {
         const cartItems = req.user.cartItems || [];
@@ -43,6 +54,7 @@ export const addToCart = async (req, res) => {
             user.cartItems.push({ product: productId, quantity: 1 });
         }
 
+        markCartChanged(user);
         await user.save();
         res.json(user.cartItems);
 
@@ -64,6 +76,7 @@ export const addToCart = async (req, res) => {
                     (item) => item.product.toString() !== productId
                 );
             }
+            markCartChanged(user);
             await user.save();
             res.json(user.cartItems);
         } catch (error) {
@@ -93,10 +106,12 @@ export const addToCart = async (req, res) => {
                         user.cartItems = user.cartItems.filter(
                             (item) => item.product.toString() !== productId
                         );
+                        markCartChanged(user);
                         await user.save();
                         return res.json(user.cartItems);
                     }
                     existingItem.quantity = quantity;
+                    markCartChanged(user);
                     await user.save();
                     res.json(user.cartItems);
                 } else {

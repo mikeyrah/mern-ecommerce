@@ -16,9 +16,11 @@ import analyticsRoutes from "./routes/analytics.route.js";
 import orderRoutes from "./routes/order.route.js";
 import blogRoutes from "./routes/blog.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
+import recoveryRoutes from "./routes/recovery.route.js";
 import { stripeWebhook } from "./controllers/payment.controller.js";
 
 import { connectDB } from "./lib/db.js";
+import { startCartRecoveryScheduler } from "./lib/cartRecovery.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
@@ -94,6 +96,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/recovery", recoveryRoutes);
 
 app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
@@ -118,6 +121,7 @@ const startServer = async () => {
         if (missing.length) throw new Error(`Missing required production configuration: ${missing.join(", ")}`);
     }
     await connectDB();
+    startCartRecoveryScheduler();
     app.listen(PORT, () => {
         console.log("Server is running on http://localhost:" + PORT);
     });

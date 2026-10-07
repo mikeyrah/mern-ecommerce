@@ -4,6 +4,22 @@ import User from '../models/user.model.js';
 import Product from '../models/product.model.js';
 import { stripe } from '../lib/stripe.js';
 import { sendNewOrderNotification, sendOrderConfirmation } from '../lib/email.js';
+import { RecoveryEvent } from '../models/cartRecovery.model.js';
+
+const clearPurchasedCart = async (userId, order) => {
+    const user = await User.findById(userId).select("cartItems cartReminderSentAt cartReminderCartUpdatedAt cartUpdatedAt");
+    if (!user) return;
+    const wasReminded = Boolean(user.cartReminderSentAt && user.cartReminderCartUpdatedAt);
+    user.cartItems = [];
+    user.cartUpdatedAt = undefined;
+    user.cartReminderSentAt = undefined;
+    user.cartReminderCartUpdatedAt = undefined;
+    await user.save();
+    if (wasReminded) {
+        try { await RecoveryEvent.create({ user: user._id, type: "recovered", cartTotal: order.totalAmount, itemCount: order.products.reduce((sum, item) => sum + item.quantity, 0), order: order._id }); }
+        catch (error) { if (error?.code !== 11000) throw error; }
+    }
+};
 
 
 export const createCheckoutSession = async (req,res) => {
@@ -117,7 +133,7 @@ const recordPaidOrder = async (session) => {
       if (session.payment_status !== "paid") throw new Error("Payment has not completed");
       const existingOrder = await Order.findOne({ stripeSessionId: session.id });
       if (existingOrder) {
-        await User.findByIdAndUpdate(existingOrder.user, { cartItems: [] });
+        await clearPurchasedCart(existingOrder.user, existingOrder);
         return existingOrder;
       }
       
@@ -193,7 +209,7 @@ const recordPaidOrder = async (session) => {
             ],
             { updatePipeline: true }
         )));
-        await User.findByIdAndUpdate(session.metadata.userId, { cartItems: [] });
+        await clearPurchasedCart(session.metadata.userId, newOrder);
 
         const customer = await User.findById(session.metadata.userId).select("name email").lean();
         const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL || "stewarttateandco@gmail.com";

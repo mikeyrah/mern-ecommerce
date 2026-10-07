@@ -30,6 +30,13 @@ const userSchema = new mongoose.Schema({
         }
     }
     ],
+    cartUpdatedAt: Date,
+    cartReminderSentAt: Date,
+    cartReminderCartUpdatedAt: Date,
+    abandonedCartEmails: {
+        type: Boolean,
+        default: true
+    },
     wishlist: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,

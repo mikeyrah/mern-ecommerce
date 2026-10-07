@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Camera, Check, Heart, ImagePlus, KeyRound, Loader, Mail, MailCheck, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bell, Camera, Check, Heart, ImagePlus, KeyRound, Loader, Mail, MailCheck, PackageCheck, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -13,8 +13,10 @@ const AccountPage = () => {
   const [pendingImage, setPendingImage] = useState("");
   const [securityLoading, setSecurityLoading] = useState(false);
   const [passwords, setPasswords] = useState({ currentPassword: "", password: "", confirmPassword: "" });
+  const [cartEmails, setCartEmails] = useState(true);
   const initials = user.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
   const currentImage = preview || user.profilePicture?.url;
+  useEffect(() => { axios.get("/recovery/preference").then(({ data }) => setCartEmails(data.enabled)).catch(() => {}); }, []);
 
   const chooseImage = (event) => {
     const file = event.target.files?.[0];
@@ -57,6 +59,7 @@ const AccountPage = () => {
     } catch (error) { toast.error(error.response?.data?.message || "Unable to change password"); }
     finally { setSecurityLoading(false); }
   };
+  const updateCartEmails = async () => { const next = !cartEmails; setSecurityLoading(true); try { const { data } = await axios.patch("/recovery/preference", { enabled: next }); setCartEmails(data.enabled); toast.success(data.message); } catch (error) { toast.error(error.response?.data?.message || "Unable to update email preferences"); } finally { setSecurityLoading(false); } };
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-[#f8f6ef] pb-20">
@@ -103,6 +106,7 @@ const AccountPage = () => {
             <button type="submit" disabled={securityLoading} className="rounded-full bg-[#314b3b] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50 md:col-start-3">{securityLoading ? "Saving…" : "Update password"}</button>
           </form>
         </motion.section>
+        <motion.section className="rounded-[2rem] border border-[#ded8ca] bg-white p-6 shadow-[0_18px_50px_rgba(49,75,59,0.07)] sm:p-9 lg:col-span-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center"><div className="flex items-start gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e7eee3] text-[#607660]"><Bell size={20} /></span><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#78907b]">Email preferences</p><h2 className="mt-1 font-serif text-2xl text-[#27352b]">Shopping bag reminders</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-[#687064]">Receive one gentle reminder when items have been left in your bag. Order and account-security emails are unaffected.</p></div></div><button onClick={updateCartEmails} disabled={securityLoading} className={`shrink-0 rounded-full px-5 py-3 text-sm font-semibold ${cartEmails ? "bg-[#314b3b] text-white" : "border border-[#cfc8ba] text-[#687064]"}`}>{cartEmails ? "Reminders on" : "Reminders off"}</button></div></motion.section>
       </div>
     </main>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { BarChart, BookOpen, Boxes, ClipboardList, MessageSquareText, PlusCircle, ShoppingBasket, Sparkles } from 'lucide-react';
+import { BarChart, BookOpen, Boxes, ClipboardList, MailCheck, MessageSquareText, PlusCircle, ShoppingBasket, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import AnalyticsTab from '../components/AnalyticsTab';
@@ -10,6 +10,7 @@ import OrdersTab from '../components/OrdersTab';
 import InventoryTab from '../components/InventoryTab';
 import JournalTab from '../components/JournalTab';
 import ReviewsTab from '../components/ReviewsTab';
+import RecoveryTab from '../components/RecoveryTab';
 
 const tabs = [
   { id: "create", label: "Create Product", icon: PlusCircle },
@@ -18,6 +19,7 @@ const tabs = [
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "journal", label: "Journal", icon: BookOpen },
   { id: "reviews", label: "Reviews", icon: MessageSquareText },
+  { id: "recovery", label: "Cart Recovery", icon: MailCheck },
   { id: "analytics", label: "Analytics", icon: BarChart },
 ];
 
@@ -55,7 +57,7 @@ const AdminPage = () => {
             </button>
           ))}
         </div>
-        <div className='mt-8'>{activeTab === "create" && <CreateProductForm />}{activeTab === "products" && <ProductsList />}{activeTab === "orders" && <OrdersTab />}{activeTab === "inventory" && <InventoryTab />}{activeTab === "journal" && <JournalTab />}{activeTab === "reviews" && <ReviewsTab />}{activeTab === "analytics" && <AnalyticsTab />}</div>
+        <div className='mt-8'>{activeTab === "create" && <CreateProductForm />}{activeTab === "products" && <ProductsList />}{activeTab === "orders" && <OrdersTab />}{activeTab === "inventory" && <InventoryTab />}{activeTab === "journal" && <JournalTab />}{activeTab === "reviews" && <ReviewsTab />}{activeTab === "recovery" && <RecoveryTab />}{activeTab === "analytics" && <AnalyticsTab />}</div>
 
     </main>
   )
