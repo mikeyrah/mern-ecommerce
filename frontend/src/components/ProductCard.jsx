@@ -13,6 +13,7 @@ import { useWishlistStore } from '../stores/useWishlistStore';
     const { isSaved, toggleWishlist } = useWishlistStore();
     const saved = isSaved(product._id);
     const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
+    const brandName = product.brand?.replaceAll('-', ' ') || 'Stewart-Tate & Co.';
     const handleAddToCart = () => {
         if (isOutOfStock) return;
         if(!user) {
@@ -34,7 +35,7 @@ import { useWishlistStore } from '../stores/useWishlistStore';
         </Link>
 
         <div className='mt-4 px-5 pb-5'>
-            <p className='text-xs font-bold uppercase tracking-[0.16em] text-[#7C9279]'>{product.brand?.replaceAll('-', ' ') || 'The Krafted Charm'}</p>
+            <p className='text-xs font-bold uppercase tracking-[0.16em] text-[#7C9279]'>{brandName}</p>
             <Link to={`/products/${product._id}`}><h5 className='mt-1 text-xl font-semibold tracking-tight text-[#27352b] hover:text-[#6f856c]'>{product.name}</h5></Link>
             <div className="mt-2 flex items-center gap-2 text-xs text-[#7a817b]"><Star size={14} className="fill-[#b58a34] text-[#b58a34]" /><span>{Number(product.ratingAverage || 0).toFixed(1)} ({product.ratingCount || 0})</span></div>
             <div className='mt-2 mb-5 flex items-center justify-between'>

@@ -436,7 +436,15 @@ export const getFeaturedProducts = async (req, res) => {
                         name: 1,
                         description: 1,
                         image: 1,
+                        images: 1,
                         price: 1,
+                        brand: 1,
+                        category: 1,
+                        isNew: 1,
+                        trackInventory: 1,
+                        stock: 1,
+                        reviews: 1,
+                        createdAt: 1,
                     }
                 }
             ]);
