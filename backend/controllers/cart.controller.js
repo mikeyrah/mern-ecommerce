@@ -1,5 +1,9 @@
 import Product from "../models/product.model.js";
 
+const sameLine = (item, productId, variantId = "") => item.product.toString() === productId && String(item.variant || "") === String(variantId || "");
+const selectedVariant = (product, variantId) => variantId ? product.variants.id(variantId) : null;
+const availableStock = (product, variant) => variant?.trackInventory ? variant.stock : product.trackInventory ? product.stock : null;
+
 const markCartChanged = (user) => {
     if (user.cartItems.length) {
         user.cartUpdatedAt = new Date();
@@ -17,12 +21,20 @@ export const getCartProducts = async (req, res) => {
         const productIds = cartItems.map((item) => item.product);
         const products = await Product.find({ _id: { $in: productIds } });
 
-        const productsWithQuantity = products.map(product => {
-            const item = cartItems.find(
-                (cartItem) => cartItem.product.toString() === product._id.toString()
-            );
-            return {...product.toJSON(), quantity: item.quantity};
-        })
+        const productMap = new Map(products.map((product) => [product._id.toString(), product]));
+        const productsWithQuantity = cartItems.map((item) => {
+            const product = productMap.get(item.product.toString());
+            if (!product) return null;
+            const variant = selectedVariant(product, item.variant);
+            return {
+                ...product.toJSON(),
+                quantity: item.quantity,
+                cartLineId: item._id,
+                selectedVariant: variant ? { _id: variant._id, label: variant.label, sku: variant.sku, price: variant.price, stock: variant.stock, trackInventory: variant.trackInventory, image: variant.image } : null,
+                price: item.unitPrice ?? variant?.price ?? product.price,
+                image: variant?.image || product.image,
+            };
+        }).filter(Boolean);
         res.json(productsWithQuantity);
     } catch (error) {
         console.log("Error in getCartProducts controller", error.message);
@@ -33,7 +45,7 @@ export const getCartProducts = async (req, res) => {
 
 export const addToCart = async (req, res) => {
     try {
-        const {productId} = req.body;
+        const { productId, variantId = "" } = req.body;
         const user = req.user;
 
         const product = productId ? await Product.findById(productId) : null;
@@ -41,17 +53,18 @@ export const addToCart = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        const existingItem = user.cartItems.find(
-            (item) => item.product.toString() === productId
-        );
+        const variant = variantId ? product.variants.id(variantId) : null;
+        if (product.variants.length && !variant) return res.status(400).json({ message: "Please choose a product option" });
+        const existingItem = user.cartItems.find((item) => sameLine(item, productId, variantId));
         const nextQuantity = existingItem ? existingItem.quantity + 1 : 1;
-        if (product.trackInventory && nextQuantity > product.stock) {
-            return res.status(409).json({ message: product.stock ? `Only ${product.stock} available` : "This product is out of stock" });
+        const stock = availableStock(product, variant);
+        if (stock !== null && nextQuantity > stock) {
+            return res.status(409).json({ message: stock ? `Only ${stock} available` : "This option is out of stock" });
         }
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
-            user.cartItems.push({ product: productId, quantity: 1 });
+            user.cartItems.push({ product: productId, variant: variant?._id || null, variantLabel: variant?.label || "", unitPrice: variant?.price ?? product.price, quantity: 1 });
         }
 
         markCartChanged(user);
@@ -67,13 +80,13 @@ export const addToCart = async (req, res) => {
 
     export const removeAllFromCart = async (req, res) => {
         try {
-            const { productId } = req.body;
+            const { productId, variantId = "" } = req.body;
             const user = req.user;
             if (!productId) {
                 user.cartItems = [];
             } else {
                 user.cartItems = user.cartItems.filter(
-                    (item) => item.product.toString() !== productId
+                    (item) => !sameLine(item, productId, variantId)
                 );
             }
             markCartChanged(user);
@@ -87,24 +100,24 @@ export const addToCart = async (req, res) => {
         export const updateQuantity = async (req, res) => {
             try {
                 const { id:productId } = req.params;
-                const { quantity } = req.body;
+                const { quantity, variantId = "" } = req.body;
                 const user = req.user;
                 if (!Number.isInteger(quantity) || quantity < 0) {
                     return res.status(400).json({ message: "Quantity must be a non-negative integer" });
                 }
-                const existingItem = user.cartItems.find(
-                    (item) => item.product.toString() === productId
-                );
+                const existingItem = user.cartItems.find((item) => sameLine(item, productId, variantId));
                 const product = await Product.findById(productId);
                 if (!product) return res.status(404).json({ message: "Product not found" });
-                if (product.trackInventory && quantity > product.stock) {
-                    return res.status(409).json({ message: product.stock ? `Only ${product.stock} available` : "This product is out of stock" });
+                const variant = variantId ? product.variants.id(variantId) : null;
+                const stock = availableStock(product, variant);
+                if (stock !== null && quantity > stock) {
+                    return res.status(409).json({ message: stock ? `Only ${stock} available` : "This option is out of stock" });
                 }
             
                 if (existingItem) {
                     if (quantity === 0) {
                         user.cartItems = user.cartItems.filter(
-                            (item) => item.product.toString() !== productId
+                            (item) => !sameLine(item, productId, variantId)
                         );
                         markCartChanged(user);
                         await user.save();

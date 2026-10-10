@@ -59,7 +59,7 @@ const OrderCard = ({ order, onUpdate }) => {
       <div className="space-y-4">{order.products.map((item) => {
         const product = item.product;
         const image = item.image || product?.images?.[0] || product?.image;
-        return <div key={item._id} className="flex items-center gap-4">{image ? <img src={image} alt="" className="h-20 w-20 rounded-xl object-cover" /> : <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#eef1e8]"><Box className="text-[#78907b]" /></span>}<div><p className="font-serif text-lg text-[#27352b]">{item.name || product?.name || "Product"}</p><p className="mt-1 text-sm text-[#747c75]">Qty {item.quantity} · ${Number(item.price).toFixed(2)}</p></div></div>;
+        return <div key={item._id} className="flex items-center gap-4">{image ? <img src={image} alt="" className="h-20 w-20 rounded-xl object-cover" /> : <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#eef1e8]"><Box className="text-[#78907b]" /></span>}<div><p className="font-serif text-lg text-[#27352b]">{item.name || product?.name || "Product"}</p>{item.variantLabel && <p className="mt-0.5 text-sm font-semibold text-[#607660]">{item.variantName || "Option"}: {item.variantLabel}</p>}<p className="mt-1 text-sm text-[#747c75]">Qty {item.quantity} · ${Number(item.price).toFixed(2)}</p></div></div>;
       })}</div>
       <div className="min-w-64 space-y-4 rounded-2xl bg-[#f4f3ed] p-5">
         <div className="flex justify-between gap-8"><span className="text-sm text-[#747c75]">Total</span><strong className="font-serif text-xl text-[#b58a34]">${Number(order.totalAmount).toFixed(2)}</strong></div>

@@ -16,12 +16,16 @@ export const processAbandonedCarts = async () => {
             abandonedCartEmails: { $ne: false },
             cartUpdatedAt: { $lte: cutoff },
             $expr: { $ne: ["$cartReminderCartUpdatedAt", "$cartUpdatedAt"] },
-        }).populate("cartItems.product", "name price image images stock trackInventory").limit(50);
+        }).populate("cartItems.product", "name price image images stock trackInventory variants variantName").limit(50);
 
         for (const user of users) {
-            const items = user.cartItems.filter((item) => item.product && (!item.product.trackInventory || item.product.stock > 0));
+            const items = user.cartItems.filter((item) => {
+                if (!item.product) return false;
+                const variant = item.variant ? item.product.variants.id(item.variant) : null;
+                return variant?.trackInventory ? variant.stock > 0 : !item.product.trackInventory || item.product.stock > 0;
+            });
             if (!items.length) continue;
-            const cartTotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+            const cartTotal = items.reduce((sum, item) => sum + (item.unitPrice ?? item.product.price) * item.quantity, 0);
             const result = await sendAbandonedCartReminder(user, items, cartTotal);
             if (result?.skipped) continue;
             user.cartReminderSentAt = new Date();

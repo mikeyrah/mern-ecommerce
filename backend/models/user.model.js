@@ -27,7 +27,13 @@ const userSchema = new mongoose.Schema({
         product: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Product"
-        }
+        },
+        variant: {
+            type: mongoose.Schema.Types.ObjectId,
+            default: null
+        },
+        variantLabel: { type: String, default: "" },
+        unitPrice: { type: Number, min: 0 }
     }
     ],
     cartUpdatedAt: Date,

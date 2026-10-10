@@ -34,6 +34,7 @@ export const createCheckoutSession = async (req,res) => {
 
         const requestedProducts = products.map((product) => ({
             id: product._id,
+            variantId: product.selectedVariant?._id || product.variantId || "",
             quantity: Number(product.quantity),
         }));
         if (requestedProducts.some((product) => !product.id || !Number.isInteger(product.quantity) || product.quantity < 1 || product.quantity > 99)) {
@@ -43,10 +44,21 @@ export const createCheckoutSession = async (req,res) => {
         const catalogProducts = await Product.find({ _id: { $in: requestedProducts.map((product) => product.id) } }).lean();
         if (catalogProducts.length !== requestedProducts.length) return res.status(400).json({ message: "One or more products are unavailable" });
         const catalog = new Map(catalogProducts.map((product) => [product._id.toString(), product]));
-        const verifiedProducts = requestedProducts.map((item) => ({ ...catalog.get(item.id), quantity: item.quantity }));
-        const unavailable = verifiedProducts.find((product) => product.trackInventory && product.quantity > product.stock);
+        const verifiedProducts = requestedProducts.map((item) => {
+            const product = catalog.get(item.id);
+            const variant = item.variantId ? product?.variants?.find((entry) => entry._id.toString() === item.variantId) : null;
+            if (product?.variants?.length && !variant) throw new Error(`Choose an option for ${product.name}`);
+            return { ...product, quantity: item.quantity, variantId: item.variantId, selectedVariant: variant, price: variant?.price ?? product.price };
+        });
+        const unavailable = verifiedProducts.find((product) => product.selectedVariant?.trackInventory ? product.quantity > product.selectedVariant.stock : product.trackInventory && product.quantity > product.stock);
         if (unavailable) {
-            return res.status(409).json({ message: unavailable.stock ? `Only ${unavailable.stock} of ${unavailable.name} available` : `${unavailable.name} is out of stock` });
+            const availableStock = unavailable.selectedVariant?.trackInventory ? unavailable.selectedVariant.stock : unavailable.stock;
+            return res.status(409).json({ message: availableStock ? `Only ${availableStock} of ${unavailable.name} available` : `${unavailable.name} is out of stock` });
+        }
+
+        const productMetadata = verifiedProducts.map((product) => `${product._id}:${product.variantId || "none"}:${product.quantity}`).join(",");
+        if (Buffer.byteLength(productMetadata, "utf8") > 500) {
+            return res.status(400).json({ message: "Your cart has too many separate product options for one checkout. Please place two smaller orders." });
         }
 
         let totalAmount = 0;
@@ -54,12 +66,13 @@ export const createCheckoutSession = async (req,res) => {
             const amount = Math.round(product.price * 100);
             totalAmount += amount * product.quantity;
 
+            const optionSuffix = product.selectedVariant ? ` — ${product.variantName || "Option"}: ${product.selectedVariant.label}` : "";
             return {
                 price_data:{
                     currency:"usd",
                     product_data: {
-                        name:product.name,
-                        images: product.image ? [product.image] : [],
+                        name:`${product.name}${optionSuffix}`,
+                        images: (product.selectedVariant?.image || product.image) ? [product.selectedVariant?.image || product.image] : [],
                     },
                     unit_amount:amount
                 },
@@ -112,7 +125,7 @@ export const createCheckoutSession = async (req,res) => {
                 couponCode:couponCode || "",
                 deliveryMethod,
                 shippingAmount: String(shippingAmount),
-                products: verifiedProducts.map((p) => `${p._id}:${p.quantity}`).join(","),
+                products: productMetadata,
             },
         });
         if(totalAmount >= 20000) {
@@ -150,15 +163,16 @@ const recordPaidOrder = async (session) => {
             products = JSON.parse(session.metadata.products);
         } else {
             const references = session.metadata.products.split(",").map((entry) => {
-                const [id, quantity] = entry.split(":");
-                return { id, quantity: Number(quantity) };
+                const [id, middle, last] = entry.split(":");
+                return last === undefined ? { id, variantId: "", quantity: Number(middle) } : { id, variantId: middle === "none" ? "" : middle, quantity: Number(last) };
             });
             const catalogProducts = await Product.find({ _id: { $in: references.map((item) => item.id) } }).lean();
             const catalog = new Map(catalogProducts.map((product) => [product._id.toString(), product]));
             products = references.map((item) => {
                 const product = catalog.get(item.id);
                 if (!product) throw new Error("A purchased product could not be located");
-                return { id: item.id, quantity: item.quantity, price: product.price, name: product.name, image: product.images?.[0] || product.image || "" };
+                const variant = item.variantId ? product.variants?.find((entry) => entry._id.toString() === item.variantId) : null;
+                return { id: item.id, variantId: item.variantId, variantName: product.variantName || "", variantLabel: variant?.label || "", quantity: item.quantity, price: variant?.price ?? product.price, sku: variant?.sku || product.sku || "", name: product.name, image: variant?.image || product.images?.[0] || product.image || "" };
             });
         }
         const newOrder = new Order({
@@ -169,6 +183,10 @@ const recordPaidOrder = async (session) => {
                 price: product.price,
                 name: product.name,
                 image: product.image,
+                variant: product.variantId || null,
+                variantName: product.variantName || "",
+                variantLabel: product.variantLabel || "",
+                sku: product.sku || "",
             })),
             totalAmount: session.amount_total / 100,
             stripeSessionId: session.id,
@@ -202,13 +220,18 @@ const recordPaidOrder = async (session) => {
             }
             throw error;
         }
-        await Promise.all(products.map((product) => Product.updateOne(
-            { _id: product.id, trackInventory: true },
-            [
-                { $set: { stock: { $max: [0, { $subtract: ["$stock", product.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, product.quantity] } } },
-            ],
-            { updatePipeline: true }
-        )));
+        await Promise.all(products.map((product) => product.variantId
+            ? Product.updateOne(
+                { _id: product.id, variants: { $elemMatch: { _id: product.variantId, trackInventory: true } } },
+                { $inc: { "variants.$[variant].stock": -product.quantity, soldCount: product.quantity } },
+                { arrayFilters: [{ "variant._id": product.variantId, "variant.trackInventory": true }] }
+            )
+            : Product.updateOne(
+                { _id: product.id, trackInventory: true },
+                [{ $set: { stock: { $max: [0, { $subtract: ["$stock", product.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, product.quantity] } } }],
+                { updatePipeline: true }
+            )
+        ));
         await clearPurchasedCart(session.metadata.userId, newOrder);
 
         const customer = await User.findById(session.metadata.userId).select("name email").lean();

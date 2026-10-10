@@ -40,7 +40,7 @@ const pageConfigs = {
     eyebrow: "The gloss edit",
     title: "A little shine, naturally.",
     description: "Comfortable, polished glosses in original favorites and limited seasonal shades for an effortless finishing touch.",
-    categories: ["lip-gloss", "seasonal-lip-gloss"],
+    categories: ["lip-gloss", "seasonal-lip-gloss", "lip-scrub", "lip-balm"],
     icon: Flower2,
     hero: "bg-[#f0e2df]",
     art: "bg-[#d9bdb9]",

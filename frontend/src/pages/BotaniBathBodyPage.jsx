@@ -95,7 +95,7 @@ const BotaniBathBodyPage = () => {
       <section className="border-b border-[#dce2d9] bg-[#fbfaf6]">
         <div className="mx-auto grid max-w-7xl divide-y divide-[#dce2d9] px-5 py-5 text-center sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8">
           <div className="px-5 py-3"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#56705d]">Small-batch care</p><p className="mt-1 text-sm text-[#707a73]">Made with attention to every detail</p></div>
-          <div className="px-5 py-3"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#56705d]">Five body rituals</p><p className="mt-1 text-sm text-[#707a73]">From cleansing to smoothing</p></div>
+          <div className="px-5 py-3"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#56705d]">Complete body rituals</p><p className="mt-1 text-sm text-[#707a73]">From cleansing and soaking to smoothing and moisture</p></div>
           <div className="px-5 py-3"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#56705d]">Thoughtfully yours</p><p className="mt-1 text-sm text-[#707a73]">Care for ordinary, beautiful days</p></div>
         </div>
       </section>

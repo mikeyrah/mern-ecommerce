@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useUserStore } from '../stores/useUserStore';
 import { useCartStore } from '../stores/useCartStore';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { useWishlistStore } from '../stores/useWishlistStore';
 
@@ -11,10 +11,14 @@ import { useWishlistStore } from '../stores/useWishlistStore';
     const { user } = useUserStore();
     const { addToCart } = useCartStore();
     const { isSaved, toggleWishlist } = useWishlistStore();
+    const navigate = useNavigate();
     const saved = isSaved(product._id);
-    const isOutOfStock = product.trackInventory && Number(product.stock) <= 0;
+    const isOutOfStock = product.variants?.length
+        ? product.variants.every((variant) => variant.trackInventory && Number(variant.stock) <= 0)
+        : product.trackInventory && Number(product.stock) <= 0;
     const brandName = product.brand?.replaceAll('-', ' ') || 'Stewart-Tate & Co.';
     const handleAddToCart = () => {
+        if (product.variants?.length) { navigate(`/products/${product._id}`); return; }
         if (isOutOfStock) return;
         if(!user) {
             toast.error("Please login to add products to cart", { id: "login" });
@@ -51,7 +55,7 @@ import { useWishlistStore } from '../stores/useWishlistStore';
             disabled={isOutOfStock}
             >
                 <ShoppingCart size={22} className='mr-2' />
-                {isOutOfStock ? "Sold out" : "Add to cart"}
+                {isOutOfStock ? "Sold out" : product.variants?.length ? "Choose options" : "Add to cart"}
             </button>
         </div>
     </div>

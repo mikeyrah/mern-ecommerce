@@ -39,6 +39,15 @@ const reviewSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+const variantSchema = new mongoose.Schema({
+    label: { type: String, required: true, trim: true, maxlength: 100 },
+    sku: { type: String, trim: true, uppercase: true, default: "" },
+    price: { type: Number, min: 0 },
+    trackInventory: { type: Boolean, default: false },
+    stock: { type: Number, min: 0, default: 0 },
+    image: { type: String, default: "" },
+}, { _id: true });
+
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -107,6 +116,16 @@ const productSchema = new mongoose.Schema({
     },
     ingredients: {
         type: [String],
+        default: [],
+    },
+    variantName: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+        default: "",
+    },
+    variants: {
+        type: [variantSchema],
         default: [],
     },
     ratingAverage: {

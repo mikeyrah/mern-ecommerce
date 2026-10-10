@@ -1,4 +1,5 @@
 import { redis } from "../lib/redis.js";
+import mongoose from "mongoose";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import Order from "../models/order.model.js";
@@ -43,6 +44,18 @@ const hasPurchasedProduct = (userId, productId) => Order.exists({
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const allowedBrands = new Set(["botani-eve", "the-krafted-charm", "the-velvet-bakery"]);
+const normalizeVariants = (variants = []) => {
+    if (!Array.isArray(variants)) return [];
+    return variants.map((variant) => ({
+        ...((variant?._id && mongoose.isValidObjectId(variant._id)) ? { _id: variant._id } : {}),
+        label: String(variant?.label || "").trim(),
+        sku: String(variant?.sku || "").trim(),
+        price: variant?.price === "" || variant?.price === undefined || variant?.price === null ? undefined : Number(variant.price),
+        trackInventory: Boolean(variant?.trackInventory),
+        stock: Math.max(0, Number(variant?.stock) || 0),
+        image: String(variant?.image || "").trim(),
+    })).filter((variant) => variant.label);
+};
 
 const notifyWishlistRestock = async (product) => {
     const users = await User.find({ wishlist: { $elemMatch: { product: product._id, notifyBackInStock: true } } });
@@ -161,7 +174,7 @@ export const getFeaturedProducts = async (req, res) => {
 
     export const createProduct = async (req, res) => {
         try {
-            const { name, description, price, image, images = [], category, brand, details = "", ingredients = [], isNew = false, sku = "", trackInventory = false, stock = 0, lowStockThreshold = 5 } = req.body;
+            const { name, description, price, image, images = [], category, brand, details = "", ingredients = [], isNew = false, sku = "", trackInventory = false, stock = 0, lowStockThreshold = 5, variantName = "", variants = [] } = req.body;
 
             const imagePayloads = images.length ? images : image ? [image] : [];
             const uploadedImages = await uploadProductImages(imagePayloads);
@@ -185,6 +198,8 @@ export const getFeaturedProducts = async (req, res) => {
                 trackInventory: Boolean(trackInventory),
                 stock: Math.max(0, Number(stock) || 0),
                 lowStockThreshold: Math.max(0, Number(lowStockThreshold) || 0),
+                variantName: String(variantName).trim(),
+                variants: normalizeVariants(variants),
             })
             res.status(201).json({ product });
         } catch (error) {
@@ -228,7 +243,7 @@ export const getFeaturedProducts = async (req, res) => {
                 return res.status(404).json({ message: "Product not found" });
             }
 
-            const { name, description, price, image, images, category, brand, details = "", ingredients = [], isNew = false, sku, trackInventory, stock, lowStockThreshold } = req.body;
+            const { name, description, price, image, images, category, brand, details = "", ingredients = [], isNew = false, sku, trackInventory, stock, lowStockThreshold, variantName = "", variants = [] } = req.body;
             const wasOutOfStock = product.trackInventory && product.stock <= 0;
 
             if (!name || !description || price === "" || price === undefined || !category || !brand) {
@@ -262,6 +277,8 @@ export const getFeaturedProducts = async (req, res) => {
             if (trackInventory !== undefined) product.trackInventory = Boolean(trackInventory);
             if (stock !== undefined) product.stock = Math.max(0, Number(stock) || 0);
             if (lowStockThreshold !== undefined) product.lowStockThreshold = Math.max(0, Number(lowStockThreshold) || 0);
+            product.variantName = String(variantName).trim();
+            product.variants = normalizeVariants(variants);
 
             const updatedProduct = await product.save();
             if (wasOutOfStock && (!updatedProduct.trackInventory || updatedProduct.stock > 0)) notifyWishlistRestock(updatedProduct).catch((error) => console.log("Wishlist restock notification failed", error.message));
@@ -443,6 +460,8 @@ export const getFeaturedProducts = async (req, res) => {
                         isNew: 1,
                         trackInventory: 1,
                         stock: 1,
+                        variantName: 1,
+                        variants: 1,
                         reviews: 1,
                         createdAt: 1,
                     }

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 const CartItem = ({item}) => {
     const { removeFromCart, updateQuantity } = useCartStore()
+    const variantId = item.selectedVariant?._id || "";
 
   return (
     <article className='rounded-[1.5rem] border border-[#dfd8c9] bg-white p-4 shadow-[0_12px_35px_rgba(70,63,43,0.06)] transition hover:shadow-[0_18px_45px_rgba(70,63,43,0.1)] sm:p-5'>
@@ -15,14 +16,15 @@ const CartItem = ({item}) => {
         <div className='min-w-0 self-center'>
             <p className='text-[10px] font-bold uppercase tracking-[0.18em] text-[#78907b]'>{item.brand?.replaceAll('-', ' ') || 'Stewart-Tate & Co.'}</p>
             <Link to={`/products/${item._id}`} className='mt-1 block font-serif text-xl text-[#27352b] transition hover:text-[#6f856c] sm:text-2xl'>{item.name}</Link>
+            {item.selectedVariant && <p className='mt-1 text-sm font-semibold text-[#607660]'>{item.variantName || "Option"}: {item.selectedVariant.label}</p>}
             <p className='mt-2 line-clamp-2 text-sm leading-6 text-[#707970]'>{item.description}</p>
-            <button className='mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#996052] transition hover:text-[#783f2f]' onClick={() => removeFromCart(item._id)} aria-label={`Remove ${item.name} from cart`}><Trash size={14} /> Remove</button>
+            <button className='mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#996052] transition hover:text-[#783f2f]' onClick={() => removeFromCart(item._id, variantId)} aria-label={`Remove ${item.name} from cart`}><Trash size={14} /> Remove</button>
         </div>
         <div className='col-span-2 flex items-center justify-between border-t border-[#ece7dd] pt-4 sm:col-span-1 sm:block sm:min-w-32 sm:border-0 sm:pt-0 sm:text-right'>
             <div className='inline-flex items-center gap-3 rounded-full border border-[#d8d5ca] bg-[#faf9f5] p-1'>
                 <button
                 className='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4f6053] transition hover:bg-[#e6ede2] focus:outline-none focus:ring-2 focus:ring-[#9bad99]'
-                onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                onClick={() => updateQuantity(item._id, item.quantity - 1, variantId)}
                 aria-label={`Decrease ${item.name} quantity`}
                 >
                     <Minus size={14} />
@@ -30,7 +32,7 @@ const CartItem = ({item}) => {
                 <p className='min-w-4 text-center text-sm font-semibold text-[#314b3b]'>{item.quantity}</p>
                 <button
                 className='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4f6053] transition hover:bg-[#e6ede2] focus:outline-none focus:ring-2 focus:ring-[#9bad99]'
-                onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                onClick={() => updateQuantity(item._id, item.quantity + 1, variantId)}
                 aria-label={`Increase ${item.name} quantity`}
                 >
                     <Plus size={14} />

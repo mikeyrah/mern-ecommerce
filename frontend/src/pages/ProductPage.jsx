@@ -21,6 +21,7 @@ const ProductPage = () => {
   const { isSaved, toggleWishlist } = useWishlistStore();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState("");
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState(false);
   const [rating, setRating] = useState(5);
@@ -29,6 +30,7 @@ const ProductPage = () => {
 
   useEffect(() => {
     setLoading(true);
+    setSelectedVariantId("");
     axios.get(`/products/${id}`)
       .then(({ data }) => setProduct(data.product))
       .catch((error) => toast.error(error.response?.data?.message || "Unable to load product"))
@@ -51,15 +53,19 @@ const ProductPage = () => {
     return [...new Set([...(product.images || []), product.image].filter(Boolean))];
   }, [product]);
 
+  const selectedVariant = product?.variants?.find((variant) => variant._id === selectedVariantId) || null;
+  const displayPrice = selectedVariant?.price ?? product?.price ?? 0;
+
   const isRecentlyAdded = product && (product.isNew || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000);
-  const isOutOfStock = Boolean(product?.trackInventory && Number(product.stock) <= 0);
-  const isLowStock = Boolean(product?.trackInventory && product.stock > 0 && product.stock <= product.lowStockThreshold);
+  const isOutOfStock = Boolean(selectedVariant ? selectedVariant.trackInventory && Number(selectedVariant.stock) <= 0 : product?.variants?.length ? product.variants.every((variant) => variant.trackInventory && Number(variant.stock) <= 0) : product?.trackInventory && Number(product.stock) <= 0);
+  const isLowStock = Boolean(selectedVariant ? selectedVariant.trackInventory && selectedVariant.stock > 0 && selectedVariant.stock <= product.lowStockThreshold : !product?.variants?.length && product?.trackInventory && product.stock > 0 && product.stock <= product.lowStockThreshold);
   const saved = product ? isSaved(product._id) : false;
 
   const handleAddToBag = () => {
     if (isOutOfStock) return toast.error("This product is currently out of stock");
     if (!user) return toast.error("Please sign in to add this product to your bag");
-    addToCart(product);
+    if (product.variants?.length && !selectedVariant) return toast.error(`Please choose a ${product.variantName || "product option"}`);
+    addToCart(product, selectedVariant);
   };
 
   const submitReview = async (event) => {
@@ -99,8 +105,9 @@ const ProductPage = () => {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#7c9279]">{product.brand?.replaceAll("-", " ")}</p>
           <h1 className="mt-3 font-serif text-5xl leading-tight text-[#27352b] sm:text-6xl">{product.name}</h1>
           <div className="mt-5 flex flex-wrap items-center gap-3"><Stars value={product.ratingAverage} /><a href="#reviews" className="text-sm text-[#667168] underline underline-offset-4">{product.ratingCount || 0} review{product.ratingCount === 1 ? "" : "s"}</a></div>
-          <p className="mt-6 text-3xl font-semibold text-[#314b3b]">${Number(product.price).toFixed(2)}</p>
-          {isOutOfStock ? <p className="mt-3 text-sm font-semibold text-[#92584d]">Currently out of stock</p> : isLowStock ? <p className="mt-3 text-sm font-semibold text-[#9a742d]">Only {product.stock} left in stock</p> : product.trackInventory ? <p className="mt-3 text-sm font-semibold text-[#607660]">In stock and ready to ship</p> : null}
+          <p className="mt-6 text-3xl font-semibold text-[#314b3b]">${Number(displayPrice).toFixed(2)}</p>
+          {product.variants?.length ? <fieldset className="mt-7"><legend className="text-sm font-bold text-[#43503f]">Choose {product.variantName || "an option"}</legend><div className="mt-3 flex flex-wrap gap-2">{product.variants.map((variant) => { const unavailable = variant.trackInventory && Number(variant.stock) <= 0; return <button type="button" key={variant._id} disabled={unavailable} onClick={() => setSelectedVariantId(variant._id)} className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${selectedVariantId === variant._id ? "border-[#314b3b] bg-[#314b3b] text-white" : "border-[#cfc8ba] bg-white text-[#526057]"}`}>{variant.label}{variant.price !== undefined && variant.price !== null ? ` · $${Number(variant.price).toFixed(2)}` : ""}{unavailable ? " · Sold out" : ""}</button>; })}</div></fieldset> : null}
+          {isOutOfStock ? <p className="mt-3 text-sm font-semibold text-[#92584d]">Currently out of stock</p> : isLowStock ? <p className="mt-3 text-sm font-semibold text-[#9a742d]">Only {selectedVariant ? selectedVariant.stock : product.stock} left in stock</p> : (selectedVariant?.trackInventory || (!product.variants?.length && product.trackInventory)) ? <p className="mt-3 text-sm font-semibold text-[#607660]">In stock and ready to ship</p> : null}
           <p className="mt-6 text-base leading-7 text-[#5e6961]">{product.description}</p>
 
           <div className="mt-8 grid grid-cols-[1fr_auto] gap-3"><button type="button" onClick={handleAddToBag} disabled={isOutOfStock} className="flex w-full items-center justify-center gap-3 rounded-full bg-[#314b3b] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#263d30] disabled:cursor-not-allowed disabled:bg-[#aaa9a2]"><ShoppingBag size={19} /> {isOutOfStock ? "Sold out" : "Add to bag"}</button><button type="button" onClick={() => user ? toggleWishlist(product) : toast.error("Please sign in to save favorites")} aria-label={saved ? "Remove from wishlist" : "Save to wishlist"} className={`flex h-14 w-14 items-center justify-center rounded-full border bg-white ${saved ? "border-[#a15f6c] text-[#a15f6c]" : "border-[#cfc8ba] text-[#657168]"}`}><Heart className={saved ? "fill-current" : ""} /></button></div>

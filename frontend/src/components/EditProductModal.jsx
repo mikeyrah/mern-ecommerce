@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ImagePlus, Loader, Save, X } from "lucide-react";
 import { botaniCollections } from "../data/brands";
 import { useProductStore } from "../stores/useProductStore";
+import VariantFields from "./VariantFields";
 
 const categoriesByBrand = {
   "botani-eve": botaniCollections.map(({ slug, label }) => ({ value: slug, label })),
@@ -27,6 +28,8 @@ const EditProductModal = ({ product, onClose }) => {
     details: product.details || "",
     ingredients: product.ingredients?.join(", ") || "",
     isNew: Boolean(product.isNew),
+    variantName: product.variantName || "",
+    variants: product.variants || [],
   });
 
   const categoryOptions = useMemo(() => categoriesByBrand[form.brand] || [], [form.brand]);
@@ -102,6 +105,7 @@ const EditProductModal = ({ product, onClose }) => {
             <input type="checkbox" checked={form.isNew} onChange={(event) => setField("isNew", event.target.checked)} className="h-4 w-4 accent-[#6f856c]" />
             Display New product badge
           </label>
+          <VariantFields variantName={form.variantName} variants={form.variants} onChange={({ variantName, variants }) => setForm((current) => ({ ...current, variantName, variants }))} />
 
           <div className="sm:col-span-2 flex flex-col-reverse gap-3 border-t border-[#e2dccf] pt-5 sm:flex-row sm:justify-end">
             <button type="button" onClick={onClose} disabled={loading} className="rounded-full border border-[#cfc8ba] px-5 py-2.5 text-sm font-semibold text-[#596259]">Cancel</button>

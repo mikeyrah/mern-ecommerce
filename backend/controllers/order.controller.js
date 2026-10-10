@@ -6,6 +6,28 @@ import { stripe } from "../lib/stripe.js";
 import { sendOrderStatusUpdate, sendReturnRequestNotification, sendReturnStatusUpdate } from "../lib/email.js";
 
 const statuses = new Set(["placed", "processing", "shipped", "delivered", "cancelled"]);
+const adjustInventory = async (item, direction) => {
+    if (item.variant) {
+        const variantUpdate = await Product.updateOne(
+            { _id: item.product, variants: { $elemMatch: { _id: item.variant, trackInventory: true } } },
+            { $inc: { "variants.$[variant].stock": direction * item.quantity } },
+            { arrayFilters: [{ "variant._id": item.variant, "variant.trackInventory": true }] }
+        );
+        if (variantUpdate.modifiedCount) {
+            await Product.updateOne(
+                { _id: item.product },
+                [{ $set: { soldCount: direction > 0 ? { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } : { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }],
+                { updatePipeline: true }
+            );
+        }
+        return;
+    }
+    return Product.updateOne(
+        { _id: item.product, trackInventory: true },
+        [{ $set: { stock: direction > 0 ? { $add: ["$stock", item.quantity] } : { $max: [0, { $subtract: ["$stock", item.quantity] }] }, soldCount: direction > 0 ? { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } : { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }],
+        { updatePipeline: true }
+    );
+};
 
 const populatedOrder = (query) => query
     .populate("user", "name email profilePicture")
@@ -53,18 +75,10 @@ export const updateOrder = async (req, res) => {
         const statusChanged = fulfillmentStatus && fulfillmentStatus !== order.fulfillmentStatus;
         if (statusChanged) {
             if (fulfillmentStatus === "cancelled" && !order.inventoryRestocked) {
-                await Promise.all(order.products.map((item) => Product.updateOne(
-                    { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }],
-                    { updatePipeline: true }
-                )));
+                await Promise.all(order.products.map((item) => adjustInventory(item, 1)));
                 order.inventoryRestocked = true;
             } else if (order.fulfillmentStatus === "cancelled" && order.inventoryRestocked) {
-                await Promise.all(order.products.map((item) => Product.updateOne(
-                    { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $max: [0, { $subtract: ["$stock", item.quantity] }] }, soldCount: { $add: [{ $ifNull: ["$soldCount", 0] }, item.quantity] } } }],
-                    { updatePipeline: true }
-                )));
+                await Promise.all(order.products.map((item) => adjustInventory(item, -1)));
                 order.inventoryRestocked = false;
             }
             order.fulfillmentStatus = fulfillmentStatus;
@@ -135,11 +149,7 @@ export const reviewReturn = async (req, res) => {
             order.returnRequest.refundAmount = refund.amount / 100;
             order.returnRequest.refundedAt = new Date();
             if (!order.inventoryRestocked) {
-                await Promise.all(order.products.map((item) => Product.updateOne(
-                    { _id: item.product, trackInventory: true },
-                    [{ $set: { stock: { $add: ["$stock", item.quantity] }, soldCount: { $max: [0, { $subtract: [{ $ifNull: ["$soldCount", 0] }, item.quantity] }] } } }],
-                    { updatePipeline: true }
-                )));
+                await Promise.all(order.products.map((item) => adjustInventory(item, 1)));
                 order.inventoryRestocked = true;
             }
         }

@@ -55,16 +55,20 @@ export const useCartStore = create((set, get) => ({
             toast.error(error.response?.data?.message || "Unable to load cart");
         }
     },
-    addToCart: async(product) => {
+    addToCart: async(product, variant = null) => {
+        if (product.variants?.length && !variant) {
+            window.location.assign(`/products/${product._id}`);
+            return;
+        }
         try {
-            await axios.post("/cart", {productId:product._id});
+            await axios.post("/cart", { productId: product._id, variantId: variant?._id || "" });
             toast.success("Added to cart");
 
             set((prevState) => {
-                const existingItem = prevState.cart.find((item) => item._id === product._id);
+                const existingItem = prevState.cart.find((item) => item._id === product._id && (item.selectedVariant?._id || "") === (variant?._id || ""));
                 const newCart = existingItem
-                ? prevState.cart.map((item) => (item._id === product._id ? { ...item, quantity: item.quantity + 1} : item))
-                : [...prevState.cart, { ...product, quantity: 1 }];
+                ? prevState.cart.map((item) => (item._id === product._id && (item.selectedVariant?._id || "") === (variant?._id || "") ? { ...item, quantity: item.quantity + 1} : item))
+                : [...prevState.cart, { ...product, selectedVariant: variant, price: variant?.price ?? product.price, image: variant?.image || product.image, quantity: 1 }];
                 return { cart: newCart };
             });
             get().calculateTotals();
@@ -74,29 +78,29 @@ export const useCartStore = create((set, get) => ({
         }
     },
 
-    removeFromCart: async (productId) => {
+    removeFromCart: async (productId, variantId = "") => {
         try {
-            await axios.delete(`/cart`, { data: { productId } });
-            set((prevState) => ({ cart: prevState.cart.filter((item) => item._id !== productId) }));
+            await axios.delete(`/cart`, { data: { productId, variantId } });
+            set((prevState) => ({ cart: prevState.cart.filter((item) => !(item._id === productId && (item.selectedVariant?._id || "") === variantId)) }));
             get().calculateTotals();
         } catch (error) {
             toast.error(error.response?.data?.message || "Unable to remove item from cart");
         }
         },
 
-    updateQuantity: async (productId, quantity) => {
+    updateQuantity: async (productId, quantity, variantId = "") => {
         if (!Number.isInteger(quantity) || quantity < 0) {
             return;
         }
 
         if (quantity === 0) {
-            await get().removeFromCart(productId);
+            await get().removeFromCart(productId, variantId);
             return;
         }
         try {
-            await axios.put(`/cart/${productId}`, { quantity });
+            await axios.put(`/cart/${productId}`, { quantity, variantId });
             set((prevState) => ({
-                cart: prevState.cart.map((item) => (item._id === productId ? { ...item, quantity } : item)),
+                cart: prevState.cart.map((item) => (item._id === productId && (item.selectedVariant?._id || "") === variantId ? { ...item, quantity } : item)),
             }));
             get().calculateTotals();
         } catch (error) {

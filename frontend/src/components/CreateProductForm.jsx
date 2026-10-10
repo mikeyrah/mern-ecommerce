@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from '../stores/useProductStore';
 import { botaniCollections } from '../data/brands';
+import VariantFields from './VariantFields';
 
 const categoriesByBrand = {
     "botani-eve": botaniCollections.map(({ slug, label }) => ({ value: slug, label })),
@@ -27,6 +28,8 @@ const CreateProductForm = () => {
         details: "",
         ingredients: "",
         isNew: false,
+        variantName: "",
+        variants: [],
     });
 
     const {createProduct, loading} = useProductStore();
@@ -36,7 +39,7 @@ const CreateProductForm = () => {
         e.preventDefault();
        try {
         const created = await createProduct(newProduct);
-        if (created) setNewProduct({ name: "", description: "", price: "", category: "", brand: "the-krafted-charm", images: [], details: "", ingredients: "", isNew: false });
+        if (created) setNewProduct({ name: "", description: "", price: "", category: "", brand: "the-krafted-charm", images: [], details: "", ingredients: "", isNew: false, variantName: "", variants: [] });
        } catch {
         console.log("error creating a product");
        }
@@ -175,6 +178,8 @@ const CreateProductForm = () => {
                 <input type='checkbox' checked={newProduct.isNew} onChange={(e) => setNewProduct({ ...newProduct, isNew: e.target.checked })} className='h-4 w-4 accent-[#6f856c]' />
                 Show this product as New
             </label>
+
+            <VariantFields variantName={newProduct.variantName} variants={newProduct.variants} onChange={({ variantName, variants }) => setNewProduct((current) => ({ ...current, variantName, variants }))} />
 
             <button
             type='submit'
