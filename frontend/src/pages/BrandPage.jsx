@@ -5,6 +5,7 @@ import { brands, getBrand } from "../data/brands";
 import { useProductStore } from "../stores/useProductStore";
 import ProductCard from "../components/ProductCard";
 import BotaniEvePage from "./BotaniEvePage";
+import KraftedCharmPage from "./KraftedCharmPage";
 
 const BrandPage = () => {
   const { brand: brandSlug } = useParams();
@@ -16,6 +17,7 @@ const BrandPage = () => {
   }, [brand, brandSlug, fetchProductsByBrand]);
 
   if (brandSlug === "botani-eve") return <BotaniEvePage />;
+  if (brandSlug === "the-krafted-charm") return <KraftedCharmPage />;
 
   if (!brand) return <div className="brand-shell px-6 py-32 text-center">Brand not found.</div>;
 
