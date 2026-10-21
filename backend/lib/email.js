@@ -118,3 +118,24 @@ export const sendReturnRequestNotification = (order, customer) => sendEmail({
     subject: `Return requested: ${order.orderNumber}`,
     html: layout("Return request", "A customer requested a return.", `<p style="line-height:1.7;color:#596259"><strong>${escapeHtml(customer.name || "Customer")}</strong> requested a return for order <strong>${escapeHtml(order.orderNumber)}</strong>.</p><p style="padding:16px;background:#edf3e9;border-radius:12px;line-height:1.6"><strong>Reason</strong><br>${escapeHtml(order.returnRequest?.reason || "Not provided")}${order.returnRequest?.customerNote ? `<br><br>${escapeHtml(order.returnRequest.customerNote)}` : ""}</p>${storeUrl() ? `<p style="margin-top:24px"><a href="${storeUrl()}/secret-dashboard" style="display:inline-block;background:#314b3b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px">Review return</a></p>` : ""}`),
 });
+
+const customOrderDetails = (order) => `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:22px 0"><tr><td style="padding:9px 0;border-bottom:1px solid #ece7dd"><strong>Request</strong></td><td align="right">${escapeHtml(order.requestNumber)}</td></tr><tr><td style="padding:9px 0;border-bottom:1px solid #ece7dd"><strong>Occasion</strong></td><td align="right">${escapeHtml(order.occasion)}</td></tr><tr><td style="padding:9px 0;border-bottom:1px solid #ece7dd"><strong>Dessert</strong></td><td align="right">${escapeHtml(order.dessertType.replaceAll("-", " "))}</td></tr><tr><td style="padding:9px 0;border-bottom:1px solid #ece7dd"><strong>Event date</strong></td><td align="right">${new Date(order.eventDate).toLocaleDateString("en-US", { timeZone: "UTC" })}</td></tr><tr><td style="padding:9px 0;border-bottom:1px solid #ece7dd"><strong>Servings</strong></td><td align="right">${escapeHtml(order.servings)}</td></tr><tr><td style="padding:9px 0"><strong>Flavor</strong></td><td align="right">${escapeHtml(order.flavor)}</td></tr></table>`;
+
+export const sendCustomOrderConfirmation = (order) => sendEmail({
+    to: order.email,
+    subject: `We received your Velvet Bakery request ${order.requestNumber}`,
+    html: layout("The Velvet Bakery", "Your custom request is in.", `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(order.customerName)}, thank you for sharing your celebration with us. We’ll review the details and contact you about availability and pricing.</p>${customOrderDetails(order)}<p style="font-size:13px;line-height:1.6;color:#7a817a">Submitting a request does not reserve your date. Your order is confirmed after you approve the quote and receive confirmation from our team.</p>`),
+});
+
+export const sendCustomOrderNotification = (order, recipientEmail) => sendEmail({
+    to: recipientEmail,
+    subject: `New Velvet Bakery request ${order.requestNumber}`,
+    html: layout("Custom order request", "A celebration is waiting for review.", `<p style="line-height:1.7;color:#596259"><strong>${escapeHtml(order.customerName)}</strong> submitted a custom order request. Contact: ${escapeHtml(order.email)} · ${escapeHtml(order.phone)}</p>${customOrderDetails(order)}<p style="padding:16px;background:#f3eee2;border-radius:12px;line-height:1.6"><strong>Design request</strong><br>${escapeHtml(order.designDetails)}</p>${storeUrl() ? actionButton(`${storeUrl()}/secret-dashboard`, "Review request") : ""}`),
+});
+
+export const sendCustomOrderStatusUpdate = (order) => {
+    const titles = { reviewing: "We’re reviewing your request.", quoted: "Your custom quote is ready.", approved: "Your custom order is approved.", declined: "An update about your request.", completed: "Your custom order is complete.", new: "Your request is in." };
+    const quote = order.quotedPrice ? `<p style="padding:16px;background:#f5e7e5;border-radius:12px;font-size:18px"><strong>Quoted price: ${money(order.quotedPrice)}</strong></p>` : "";
+    const note = order.adminNote ? `<p style="padding:16px;background:#f3eee2;border-radius:12px;line-height:1.6"><strong>Message from The Velvet Bakery</strong><br>${escapeHtml(order.adminNote)}</p>` : "";
+    return sendEmail({ to: order.email, subject: `${order.requestNumber}: ${titles[order.status]}`, html: layout("The Velvet Bakery", titles[order.status], `<p style="line-height:1.7;color:#596259">Hi ${escapeHtml(order.customerName)}, your custom order request is now <strong>${escapeHtml(order.status)}</strong>.</p>${quote}${note}${customOrderDetails(order)}`) });
+};

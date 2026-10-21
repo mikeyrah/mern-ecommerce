@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { BarChart, BookOpen, Boxes, ClipboardList, MailCheck, MessageSquareText, PlusCircle, ShoppingBasket, Sparkles } from 'lucide-react';
+import { BarChart, BookOpen, Boxes, CakeSlice, ClipboardList, MailCheck, MessageSquareText, PlusCircle, ShoppingBasket, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import AnalyticsTab from '../components/AnalyticsTab';
@@ -11,11 +11,13 @@ import InventoryTab from '../components/InventoryTab';
 import JournalTab from '../components/JournalTab';
 import ReviewsTab from '../components/ReviewsTab';
 import RecoveryTab from '../components/RecoveryTab';
+import CustomOrdersTab from '../components/CustomOrdersTab';
 
 const tabs = [
   { id: "create", label: "Create Product", icon: PlusCircle },
   { id: "products", label: "Products", icon: ShoppingBasket },
   { id: "orders", label: "Orders", icon: ClipboardList },
+  { id: "custom-orders", label: "Bakery Requests", icon: CakeSlice },
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "journal", label: "Journal", icon: BookOpen },
   { id: "reviews", label: "Reviews", icon: MessageSquareText },
@@ -57,7 +59,7 @@ const AdminPage = () => {
             </button>
           ))}
         </div>
-        <div className='mt-8'>{activeTab === "create" && <CreateProductForm />}{activeTab === "products" && <ProductsList />}{activeTab === "orders" && <OrdersTab />}{activeTab === "inventory" && <InventoryTab />}{activeTab === "journal" && <JournalTab />}{activeTab === "reviews" && <ReviewsTab />}{activeTab === "recovery" && <RecoveryTab />}{activeTab === "analytics" && <AnalyticsTab />}</div>
+        <div className='mt-8'>{activeTab === "create" && <CreateProductForm />}{activeTab === "products" && <ProductsList />}{activeTab === "orders" && <OrdersTab />}{activeTab === "custom-orders" && <CustomOrdersTab />}{activeTab === "inventory" && <InventoryTab />}{activeTab === "journal" && <JournalTab />}{activeTab === "reviews" && <ReviewsTab />}{activeTab === "recovery" && <RecoveryTab />}{activeTab === "analytics" && <AnalyticsTab />}</div>
 
     </main>
   )

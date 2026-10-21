@@ -17,6 +17,7 @@ import orderRoutes from "./routes/order.route.js";
 import blogRoutes from "./routes/blog.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import recoveryRoutes from "./routes/recovery.route.js";
+import customOrderRoutes from "./routes/customOrder.route.js";
 import { stripeWebhook } from "./controllers/payment.controller.js";
 
 import { connectDB } from "./lib/db.js";
@@ -60,6 +61,7 @@ app.use("/api/auth/verify-email", authLimiter);
 app.post("/api/products/:id/reviews", authLimiter);
 app.use("/api/products/search", searchLimiter);
 app.use("/api/payments/create-checkout-session", checkoutLimiter);
+app.post("/api/custom-orders", authLimiter);
 
 // The frontend sends authentication cookies with requests. When it runs on a
 // different origin (for example Vite on localhost:5173), browsers require an
@@ -99,6 +101,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/recovery", recoveryRoutes);
+app.use("/api/custom-orders", customOrderRoutes);
 
 app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
